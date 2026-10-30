@@ -1,7 +1,7 @@
 // SMRITI service worker: versioned, cache-first app shell. Bump VERSION on every release
 // (it must equal APP_VERSION in js/version.js); the page then shows "Reload to update".
 
-const VERSION = '1.3.1';
+const VERSION = '1.4.0';
 const CACHE = `smriti-shell-${VERSION}`;
 
 /* ASSETS:START */
