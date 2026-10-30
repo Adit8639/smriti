@@ -1,6 +1,6 @@
 // Boot, routing, bottom navigation, banners and keyboard shortcuts.
 
-import { h, clear, icon, toast, closeSheet, canShareFiles } from './ui.js';
+import { h, clear, icon, toast, closeSheet, closeLayers, canShareFiles } from './ui.js';
 import { app, initStore, loadProfiles, loadNodes, loadDerived, applyDerived, subscribe, getSetting, setSetting, flushState } from './store.js';
 import { seedProfiles } from './profiles.js';
 import { registerSW, onPwaChange, pwa, applyUpdate, promptInstall, requestPersist } from './pwa.js';
@@ -84,6 +84,7 @@ async function render() {
   lastPath = path;
   // A view that holds a session or timers gets a chance to wrap up when you leave it.
   if (moved && lastView && lastView.leave) lastView.leave();
+  if (moved) closeLayers();
   lastView = def.view;
   document.getElementById('view-title').textContent = def.title;
   renderNav();

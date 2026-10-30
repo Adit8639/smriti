@@ -142,3 +142,29 @@ export function sourcesForNode(state, nodeId) {
   for (const [id, s] of Object.entries(state.sources)) if (s.maps[nodeId]) out.push({ sourceId: id, ...s.maps[nodeId] });
   return out;
 }
+
+// Rejoins a PDF page's text into paragraphs: PDF text breaks at every printed line, which
+// reads badly on a narrow screen. Short lines (headings) and bullets keep their own line.
+export function reflow(text) {
+  const paras = [];
+  let cur = '';
+  let prevLen = 0;
+  for (const raw of String(text || '').split('\n')) {
+    const line = raw.trim();
+    if (!line) { if (cur) paras.push(cur); cur = ''; continue; }
+    if (!cur) { cur = line; prevLen = line.length; continue; }
+    const bullet = /^([•▪●◦*\-–]|\(?[0-9ivx]{1,4}[.)])\s/i.test(line);
+    const ended = /[.!?:;"”)]$/.test(cur);
+    const lower = /^[a-z(,]/.test(line);
+    const join = !bullet && (lower || (!ended && prevLen >= 40));
+    prevLen = line.length;
+    if (join) {
+      cur = /[a-z]-$/.test(cur) && lower ? cur.slice(0, -1) + line : `${cur} ${line}`;
+    } else {
+      paras.push(cur);
+      cur = line;
+    }
+  }
+  if (cur) paras.push(cur);
+  return paras;
+}

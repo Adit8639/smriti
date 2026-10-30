@@ -20,7 +20,7 @@ import { answerMatches, clozeTargets, makeCloze } from '../js/cloze.js';
 import { buildQueue, interleave, examAnchor, anchoredDue, reviewCapFor, isArchived } from '../js/queue.js';
 import { detectConfusions } from '../js/confusion.js';
 import { ankiTsv } from '../js/anki.js';
-import { suggestByKeywords, suggestFromPack } from '../js/sources.js';
+import { suggestByKeywords, suggestFromPack, reflow } from '../js/sources.js';
 import { pairKey } from '../js/rebuild.js';
 
 const tests = [];
@@ -800,6 +800,11 @@ test('Notes', 'revisions, levels and per-source counts', () => {
     ev('note.dropped', { nodeId: 'n', level: 2, dropped: ['x'] }, T1 + 3),
   ]);
   eq([s.notes.n.revisions, s.notes.n.latest.level, s.notes.n.levels[2].dropped, s.sourceRevisions['src-1']], [2, 2, 1, 2]);
+});
+
+test('Sources', 'page text reflows into paragraphs', () => {
+  eq(reflow('Chapter 5: Parliamentary\ndevices\nA starred question in Parliament is answered orally, and\nsupplementary questions may follow.\n\nThe consti-\ntution is supreme.\n• bullet one\n• bullet two'),
+    ['Chapter 5: Parliamentary devices', 'A starred question in Parliament is answered orally, and supplementary questions may follow.', 'The constitution is supreme.', '• bullet one', '• bullet two']);
 });
 
 test('Sources', 'topic suggestions from pack pages and from keywords', () => {

@@ -3,12 +3,12 @@
 // suggested cloze targets. Used as a route, as an overlay from source links, and inside
 // the Learn Loop's read step.
 
-import { h, clear, toast } from './ui.js';
+import { h, clear, toast, pushLayer } from './ui.js';
 import { app, allNodes } from './store.js';
 import { openPdf, pdfjs, closePdf } from './pdf.js';
 import { quickAdd } from './sheets.js';
 import { clozeTargets } from './cloze.js';
-import { nodesForPage, suggestByKeywords } from './sources.js';
+import { nodesForPage, suggestByKeywords, reflow } from './sources.js';
 import { activeProfile } from './store.js';
 import { inProfileScope } from './tree.js';
 
@@ -145,7 +145,7 @@ export async function mountReader(host, opts) {
   function drawText() {
     const parts = [];
     const text = record.texts[page - 1] || '';
-    parts.push(h('div', { class: 'reader-text pre' }, text || h('span', { class: 'muted', text: 'No text on this page (it may be an image; scanned pages need OCR, which is not available offline).' })));
+    parts.push(h('div', { class: 'reader-text' }, text ? reflow(text).map((t) => h('p', { text: t })) : h('span', { class: 'muted', text: 'No text on this page (it may be an image; scanned pages need OCR, which is not available offline).' })));
     // Text-only sources keep a small image of each page for tables and diagrams.
     if (record.mode === 'text' && record.thumbs && record.thumbs[page - 1]) {
       const img = h('img', { class: 'reader-thumb', alt: `Page ${page}` });
@@ -202,7 +202,8 @@ export async function render(route) {
 export async function openReaderOverlay(target) {
   const host = h('div', { class: 'overlay-body' });
   let reader = null;
-  const close = () => { if (reader) reader.destroy(); ov.remove(); document.body.classList.remove('overlay-open'); document.removeEventListener('keydown', esc, true); };
+  let unlayer = null;
+  const close = () => { if (!ov.isConnected) return; if (unlayer) unlayer(); if (reader) reader.destroy(); ov.remove(); document.body.classList.remove('overlay-open'); document.removeEventListener('keydown', esc, true); };
   const esc = (e) => { if (e.key === 'Escape' && !document.body.classList.contains('sheet-open')) { e.preventDefault(); e.stopPropagation(); close(); } };
   const ov = h('div', { class: 'overlay', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Source' },
     h('div', { class: 'overlay-head' }, h('button', { class: 'btn small', type: 'button', onclick: close }, '‹ Back'), h('span', { class: 'small muted', text: 'Source' })),
@@ -210,6 +211,7 @@ export async function openReaderOverlay(target) {
   document.body.append(ov);
   document.body.classList.add('overlay-open');
   document.addEventListener('keydown', esc, true);
+  unlayer = pushLayer(close);
   reader = await mountReader(host, { sourceId: target.sourceId, page: target.page });
   return close;
 }

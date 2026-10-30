@@ -45,3 +45,11 @@ The demo now includes **Demo Source** (`packs/demo/demo-source.pdf`, 40 pages). 
 - **Page offsets.** When a book's printed page numbers differ from the PDF's page numbers, set the offset once under Sources → Pack link.
 - **Keyword suggestions** for topic mapping are approximate. Suggestions from a linked pack's pages are precise.
 - **Large PDFs.** Page view of very large or complex PDFs can be slow on an older phone; text-only mode avoids that.
+
+## Phone improvements (1.3.1)
+
+- The phone's **Back** button closes the open panel or the source page instead of leaving the screen.
+- Leaving a screen closes any panel or source page left open on it.
+- Book text in the Reader flows as paragraphs instead of breaking at every printed line.
+- Messages during a review show at the top, so they never cover the answer buttons.
+- The on-screen keyboard no longer hides the buttons at the bottom while you type.

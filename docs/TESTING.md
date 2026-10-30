@@ -22,7 +22,7 @@ After 1–3 minutes the app is at **https://adit8639.github.io/smriti/**. If you
 **Basics (Phase 1)**
 
 1. Open the link and install it (the install icon in the address bar).
-2. Go to **Settings → Run the self-tests**. Expect **"71 passed, 0 failed"**.
+2. Go to **Settings → Run the self-tests**. Expect **"72 passed, 0 failed"**.
 3. Go to **Data → Try the demo pack → Import 2 packs**. Then tap **Try the demo pack** again and expect **0 new, 0 updated** (acceptance).
 4. **Library → GS-II** should show 30 atoms · 5 PYQs · 3 CA.
 5. **Rejected pack (acceptance):**
@@ -44,7 +44,7 @@ After 1–3 minutes the app is at **https://adit8639.github.io/smriti/**. If you
    4. Do it a second time.
    5. **Today** should now say "1 contrast card … in today's queue", and **Start review** shows it.
 8. **Leech flow (acceptance).** Lapses only count once an atom has reached Review, so the test clock speeds this up.
-   1. In Settings, tap **SMRITI 1.3.0** seven times. In the developer box, set the **leech threshold to 2**.
+   1. In Settings, tap **SMRITI 1.3.1** seven times. In the developer box, set the **leech threshold to 2**.
    2. **Today → Quick add** an atom you will recognise: front `Leech test: ___`, back `ok`, any topic. Start a review: it comes first. Answer it right and press **4** (Easy). Tap **End**.
    3. Settings: **+30 d**. Start a review and answer until the leech-test card appears. Tap **Missed it**, accept **Again** and pick a cause. When it returns in the same session, answer it right and accept **Good**. Tap **End**.
    4. Settings: **+7 d**. Start a review and miss the leech-test card again. The **Leech** sheet appears.

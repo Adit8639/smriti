@@ -62,6 +62,41 @@ export function toast(message, { kind = 'info', ms = 4000 } = {}) {
 // and closing it returns to the one below. Returns {el, body, setActions, close}.
 // actions: [{label, kind, onClick, disabled}]
 const stack = [];
+// Phone Back button: each open sheet or overlay adds a history entry (same URL), so Back
+// closes the top one instead of leaving the screen. An entry whose layer was closed from
+// the UI stays behind as a dead entry, and Back steps over it. Every entry is numbered,
+// so a popstate can be told apart: no number = a link was followed; lower = Back.
+const layers = [];
+let layerSeq = 0;
+let entrySeq = 0;
+let current = null;
+function stamp() {
+  try {
+    if (!history.state || history.state.smritiIdx == null) history.replaceState({ ...(history.state || {}), smritiIdx: ++entrySeq }, '');
+  } catch { /* unsupported */ }
+  current = history.state;
+}
+stamp();
+export function pushLayer(close) {
+  const entry = { id: `layer-${++layerSeq}`, close };
+  layers.push(entry);
+  try { history.pushState({ smritiLayer: entry.id, smritiIdx: ++entrySeq }, ''); current = history.state; } catch { /* unsupported */ }
+  return () => { const i = layers.indexOf(entry); if (i >= 0) layers.splice(i, 1); };
+}
+window.addEventListener('popstate', (e) => {
+  const left = current;
+  if (!e.state || e.state.smritiIdx == null) { stamp(); return; }
+  current = e.state;
+  if (!left || e.state.smritiIdx >= left.smritiIdx) return;
+  if (layers.length) { layers.pop().close(); return; }
+  if (left.smritiLayer) history.back();
+});
+window.addEventListener('hashchange', stamp);
+// Closes every sheet and overlay (on a route change).
+export function closeLayers() {
+  while (layers.length) layers.pop().close();
+}
+
 export function sheet({ title, body, actions = [], onClose, wide = false }) {
   const root = document.getElementById('sheet-root');
   const prevFocus = document.activeElement;
@@ -75,6 +110,7 @@ export function sheet({ title, body, actions = [], onClose, wide = false }) {
       h('button', { class: 'icon-btn', 'aria-label': 'Close', onclick: () => api.close() }, icon('close'))),
     bodyEl, bar);
   const backdrop = h('div', { class: 'backdrop', onclick: (e) => { if (e.target === backdrop) api.close(); } }, panel);
+  let unlayer = null;
   const api = {
     el: panel,
     body: bodyEl,
@@ -90,6 +126,7 @@ export function sheet({ title, body, actions = [], onClose, wide = false }) {
       const i = stack.indexOf(api);
       if (i < 0) return;
       stack.splice(i, 1);
+      if (unlayer) unlayer();
       backdrop.remove();
       const top = stack[stack.length - 1];
       if (top) top.backdrop.hidden = false;
@@ -102,6 +139,7 @@ export function sheet({ title, body, actions = [], onClose, wide = false }) {
   root.append(backdrop);
   document.body.classList.add('sheet-open');
   stack.push(api);
+  unlayer = pushLayer(() => api.close());
   const first = panel.querySelector('.sheet-actions .btn:not([disabled])') || panel.querySelector('button');
   if (first) first.focus();
   return api;
