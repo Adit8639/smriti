@@ -1,0 +1,1211 @@
+{
+  "pack": {
+    "id": "demo-polity",
+    "version": 1,
+    "kind": "book",
+    "exam": [
+      "cse"
+    ],
+    "title": "Demo: Indian Polity essentials",
+    "createdAt": "2026-10-30",
+    "source": {
+      "title": "Demo Source",
+      "edition": "1",
+      "pages": "1-40"
+    },
+    "report": {
+      "counts": {
+        "atoms": 30,
+        "probes": 15,
+        "pyqs": 5,
+        "ca": 3,
+        "answers": 1,
+        "notes": 1
+      },
+      "doubts": [
+        "Demo PYQs are reconstructed from the named Prelims papers (2017, 2018, 2020) to exercise the app; wording may differ slightly from the official paper, so answerSource is \"unverified\". Replace them with F2 packs built from official papers and keys.",
+        "\"Demo Source\" is fictional; its page numbers exist only so every atom has a source page."
+      ],
+      "unmapped": [],
+      "skipped": [],
+      "nodeCounts": {}
+    }
+  },
+  "atoms": [
+    {
+      "id": "demo-polity.0001",
+      "type": "date",
+      "text": "The words \"socialist\" and \"secular\" were added to the Preamble by the ___ Amendment Act, 1976.",
+      "answer": "42nd",
+      "nodes": [
+        "cse.gs2.polity.preamble"
+      ],
+      "source": {
+        "pack": "demo-polity",
+        "page": 3
+      },
+      "origin": "source",
+      "verify": false,
+      "confusables": [
+        "demo-polity.0009"
+      ],
+      "stage": [
+        "prelims"
+      ]
+    },
+    {
+      "id": "demo-polity.0002",
+      "type": "case",
+      "text": "In Kesavananda Bharati (1973), the Supreme Court held that the Preamble ___ the Constitution.",
+      "answer": "is a part of",
+      "nodes": [
+        "cse.gs2.polity.preamble",
+        "cse.gs2.polity.amendment"
+      ],
+      "source": {
+        "pack": "demo-polity",
+        "page": 4
+      },
+      "origin": "source",
+      "verify": false,
+      "confusables": [
+        "demo-polity.0003"
+      ],
+      "stage": [
+        "prelims",
+        "mains"
+      ]
+    },
+    {
+      "id": "demo-polity.0003",
+      "type": "case",
+      "text": "In the Berubari Union reference (1960), the Supreme Court held that the Preamble ___ the Constitution.",
+      "answer": "is not a part of",
+      "nodes": [
+        "cse.gs2.polity.preamble"
+      ],
+      "source": {
+        "pack": "demo-polity",
+        "page": 4
+      },
+      "origin": "source",
+      "verify": false,
+      "confusables": [
+        "demo-polity.0002"
+      ],
+      "stage": [
+        "prelims"
+      ]
+    },
+    {
+      "id": "demo-polity.0004",
+      "type": "list",
+      "text": "The Preamble promises liberty of thought, expression, belief, faith and ___; it does not mention economic liberty.",
+      "answer": "worship",
+      "nodes": [
+        "cse.gs2.polity.preamble"
+      ],
+      "source": {
+        "pack": "demo-polity",
+        "page": 2
+      },
+      "origin": "source",
+      "verify": false,
+      "stage": [
+        "prelims"
+      ]
+    },
+    {
+      "id": "demo-polity.0005",
+      "type": "fact",
+      "text": "Untouchability is abolished, and its practice in any form forbidden, by Article ___, part of the Right to Equality.",
+      "answer": "17",
+      "nodes": [
+        "cse.gs2.polity.fr"
+      ],
+      "source": {
+        "pack": "demo-polity",
+        "page": 8
+      },
+      "origin": "source",
+      "verify": false,
+      "stage": [
+        "prelims"
+      ]
+    },
+    {
+      "id": "demo-polity.0006",
+      "type": "fact",
+      "text": "Article ___ guarantees the right to move the Supreme Court for the enforcement of Fundamental Rights.",
+      "answer": "32",
+      "nodes": [
+        "cse.gs2.polity.fr"
+      ],
+      "source": {
+        "pack": "demo-polity",
+        "page": 10
+      },
+      "origin": "source",
+      "verify": false,
+      "confusables": [
+        "demo-polity.0007"
+      ],
+      "stage": [
+        "prelims",
+        "mains"
+      ]
+    },
+    {
+      "id": "demo-polity.0007",
+      "type": "compare",
+      "text": "Under Article ___, High Courts can issue writs to enforce Fundamental Rights and also \"for any other purpose\".",
+      "answer": "226",
+      "nodes": [
+        "cse.gs2.polity.fr"
+      ],
+      "source": {
+        "pack": "demo-polity",
+        "page": 10
+      },
+      "origin": "source",
+      "verify": false,
+      "confusables": [
+        "demo-polity.0006"
+      ],
+      "stage": [
+        "prelims"
+      ]
+    },
+    {
+      "id": "demo-polity.0008",
+      "type": "concept",
+      "text": "The writ of ___ (\"to have the body\") orders the release of a person who is unlawfully detained.",
+      "answer": "habeas corpus",
+      "nodes": [
+        "cse.gs2.polity.fr"
+      ],
+      "source": {
+        "pack": "demo-polity",
+        "page": 11
+      },
+      "origin": "source",
+      "verify": false,
+      "stage": [
+        "prelims"
+      ]
+    },
+    {
+      "id": "demo-polity.0009",
+      "type": "date",
+      "text": "The right to property was removed from the Fundamental Rights by the ___ Amendment Act, 1978; it is now a constitutional right under Article 300A.",
+      "answer": "44th",
+      "nodes": [
+        "cse.gs2.polity.fr"
+      ],
+      "source": {
+        "pack": "demo-polity",
+        "page": 9
+      },
+      "origin": "source",
+      "verify": false,
+      "confusables": [
+        "demo-polity.0001"
+      ],
+      "stage": [
+        "prelims"
+      ]
+    },
+    {
+      "id": "demo-polity.0010",
+      "type": "fact",
+      "text": "The Directive Principles of State Policy are in Part ___ of the Constitution (Articles 36 to 51).",
+      "answer": "IV",
+      "nodes": [
+        "cse.gs2.polity.dpsp"
+      ],
+      "source": {
+        "pack": "demo-polity",
+        "page": 14
+      },
+      "origin": "source",
+      "verify": false,
+      "stage": [
+        "prelims"
+      ]
+    },
+    {
+      "id": "demo-polity.0011",
+      "type": "concept",
+      "text": "Under Article 37, the Directive Principles are ___ by any court, yet fundamental in the governance of the country.",
+      "answer": "not enforceable",
+      "nodes": [
+        "cse.gs2.polity.dpsp"
+      ],
+      "source": {
+        "pack": "demo-polity",
+        "page": 14
+      },
+      "origin": "source",
+      "verify": false,
+      "stage": [
+        "prelims",
+        "mains"
+      ]
+    },
+    {
+      "id": "demo-polity.0012",
+      "type": "fact",
+      "text": "Fundamental Duties (Article 51A) were added by the 42nd Amendment Act, 1976, on the recommendation of the ___ Committee.",
+      "answer": "Swaran Singh",
+      "nodes": [
+        "cse.gs2.polity.dpsp"
+      ],
+      "source": {
+        "pack": "demo-polity",
+        "page": 16
+      },
+      "origin": "source",
+      "verify": false,
+      "stage": [
+        "prelims"
+      ]
+    },
+    {
+      "id": "demo-polity.0013",
+      "type": "data",
+      "text": "The Rajya Sabha can have at most 250 members, of whom the President nominates ___.",
+      "answer": "12",
+      "nodes": [
+        "cse.gs2.polity.parliament"
+      ],
+      "source": {
+        "pack": "demo-polity",
+        "page": 18
+      },
+      "origin": "source",
+      "verify": false,
+      "stage": [
+        "prelims"
+      ]
+    },
+    {
+      "id": "demo-polity.0014",
+      "type": "fact",
+      "text": "The Speaker of the Lok Sabha resigns by writing addressed to the ___.",
+      "answer": "Deputy Speaker",
+      "nodes": [
+        "cse.gs2.polity.parliament"
+      ],
+      "source": {
+        "pack": "demo-polity",
+        "page": 19
+      },
+      "origin": "source",
+      "verify": false,
+      "stage": [
+        "prelims"
+      ]
+    },
+    {
+      "id": "demo-polity.0015",
+      "type": "compare",
+      "text": "A starred question in Parliament is answered ___, and supplementary questions may follow.",
+      "answer": "orally",
+      "nodes": [
+        "cse.gs2.polity.parliament.devices"
+      ],
+      "source": {
+        "pack": "demo-polity",
+        "page": 21
+      },
+      "origin": "source",
+      "verify": false,
+      "confusables": [
+        "demo-polity.0016"
+      ],
+      "stage": [
+        "prelims"
+      ]
+    },
+    {
+      "id": "demo-polity.0016",
+      "type": "compare",
+      "text": "An unstarred question is answered ___, so no supplementary questions follow.",
+      "answer": "in writing",
+      "nodes": [
+        "cse.gs2.polity.parliament.devices"
+      ],
+      "source": {
+        "pack": "demo-polity",
+        "page": 21
+      },
+      "origin": "source",
+      "verify": false,
+      "confusables": [
+        "demo-polity.0015"
+      ],
+      "stage": [
+        "prelims"
+      ]
+    },
+    {
+      "id": "demo-polity.0017",
+      "type": "fact",
+      "text": "The Committee on ___ checks whether the executive properly uses the powers delegated by Parliament to make rules, regulations and bye-laws.",
+      "answer": "Subordinate Legislation",
+      "nodes": [
+        "cse.gs2.polity.parliament.devices"
+      ],
+      "source": {
+        "pyq": "demo-pyq-2018-subordinate-legislation"
+      },
+      "origin": "source",
+      "verify": false,
+      "stage": [
+        "prelims"
+      ]
+    },
+    {
+      "id": "demo-polity.0018",
+      "type": "fact",
+      "text": "A Money Bill can be introduced only in the ___, and only on the President's recommendation.",
+      "answer": "Lok Sabha",
+      "nodes": [
+        "cse.gs2.polity.parliament.legislation"
+      ],
+      "source": {
+        "pack": "demo-polity",
+        "page": 24
+      },
+      "origin": "source",
+      "verify": false,
+      "stage": [
+        "prelims"
+      ]
+    },
+    {
+      "id": "demo-polity.0019",
+      "type": "data",
+      "text": "The Rajya Sabha must return a Money Bill within ___ days, with or without recommendations.",
+      "answer": "14",
+      "nodes": [
+        "cse.gs2.polity.parliament.legislation"
+      ],
+      "source": {
+        "pack": "demo-polity",
+        "page": 24
+      },
+      "origin": "source",
+      "verify": false,
+      "stage": [
+        "prelims"
+      ]
+    },
+    {
+      "id": "demo-polity.0020",
+      "type": "fact",
+      "text": "A joint sitting of the two Houses under Article 108 is presided over by the ___.",
+      "answer": "Speaker of the Lok Sabha",
+      "nodes": [
+        "cse.gs2.polity.parliament.legislation",
+        "cse.gs2.polity.parliament"
+      ],
+      "source": {
+        "pack": "demo-polity",
+        "page": 25
+      },
+      "origin": "source",
+      "verify": false,
+      "stage": [
+        "prelims"
+      ]
+    },
+    {
+      "id": "demo-polity.0021",
+      "type": "list",
+      "text": "No joint sitting can be held on a Money Bill or on a ___ Bill.",
+      "answer": "Constitution Amendment",
+      "nodes": [
+        "cse.gs2.polity.parliament.legislation"
+      ],
+      "source": {
+        "pack": "demo-polity",
+        "page": 25
+      },
+      "origin": "source",
+      "verify": false,
+      "stage": [
+        "prelims"
+      ]
+    },
+    {
+      "id": "demo-polity.0022",
+      "type": "concept",
+      "text": "A proclamation of President's Rule under Article 356 does not by itself dissolve the State Assembly; it may be kept in ___.",
+      "answer": "suspended animation",
+      "nodes": [
+        "cse.gs2.polity.emergency"
+      ],
+      "source": {
+        "pyq": "demo-pyq-2017-presidents-rule"
+      },
+      "origin": "source",
+      "verify": false,
+      "stage": [
+        "prelims",
+        "mains"
+      ]
+    },
+    {
+      "id": "demo-polity.0023",
+      "type": "fact",
+      "text": "Under Article 361, no criminal proceedings may be instituted against a Governor in any court ___.",
+      "answer": "during the term of office",
+      "nodes": [
+        "cse.gs2.polity.state"
+      ],
+      "source": {
+        "pyq": "demo-pyq-2018-governor"
+      },
+      "origin": "source",
+      "verify": false,
+      "stage": [
+        "prelims"
+      ]
+    },
+    {
+      "id": "demo-polity.0024",
+      "type": "list",
+      "text": "Landmark cases on Parliament's power to amend Fundamental Rights, in order: Shankari Prasad (1951), Golaknath (1967), Kesavananda Bharati (1973) and ___ (1980).",
+      "answer": "Minerva Mills",
+      "nodes": [
+        "cse.gs2.polity.amendment"
+      ],
+      "source": {
+        "pack": "demo-polity",
+        "page": 28
+      },
+      "origin": "source",
+      "verify": false,
+      "stage": [
+        "prelims",
+        "mains"
+      ]
+    },
+    {
+      "id": "demo-polity.0025",
+      "type": "date",
+      "text": "Panchayats got constitutional status through the ___ Amendment Act, 1992, which added Part IX.",
+      "answer": "73rd",
+      "nodes": [
+        "cse.gs2.polity.local"
+      ],
+      "source": {
+        "pack": "demo-polity",
+        "page": 30
+      },
+      "origin": "source",
+      "verify": false,
+      "stage": [
+        "prelims"
+      ]
+    },
+    {
+      "id": "demo-polity.0026",
+      "type": "fact",
+      "text": "The Finance Commission is constituted by the President under Article ___ every fifth year, or earlier if needed.",
+      "answer": "280",
+      "nodes": [
+        "cse.gs2.polity.bodies"
+      ],
+      "source": {
+        "pack": "demo-polity",
+        "page": 33
+      },
+      "origin": "source",
+      "verify": false,
+      "stage": [
+        "prelims"
+      ]
+    },
+    {
+      "id": "demo-polity.0027",
+      "type": "fact",
+      "text": "C. P. Radhakrishnan was elected Vice-President of India on ___, after Jagdeep Dhankhar resigned in July 2025.",
+      "answer": "9 September 2025",
+      "nodes": [
+        "cse.gs2.polity.executive"
+      ],
+      "source": {
+        "pack": "demo-polity",
+        "page": 36
+      },
+      "origin": "source",
+      "verify": false,
+      "eventDate": "2025-09-09",
+      "shelfLifeDays": 540,
+      "stage": [
+        "prelims"
+      ]
+    },
+    {
+      "id": "demo-polity.0028",
+      "type": "fact",
+      "text": "The Constitution (130th Amendment) Bill, 2025 would remove a Prime Minister, Chief Minister or minister held in custody for ___ consecutive days on charges punishable with five or more years.",
+      "answer": "30",
+      "nodes": [
+        "cse.gs2.polity.executive"
+      ],
+      "source": {
+        "pack": "demo-polity",
+        "page": 37
+      },
+      "origin": "source",
+      "verify": false,
+      "eventDate": "2025-08-20",
+      "shelfLifeDays": 540,
+      "stage": [
+        "prelims",
+        "mains"
+      ]
+    },
+    {
+      "id": "demo-polity.0029",
+      "type": "fact",
+      "text": "Under the 84th Amendment Act (2001), allocation of Lok Sabha seats among States stays based on the 1971 Census until the first Census taken after ___.",
+      "answer": "2026",
+      "nodes": [
+        "cse.gs2.polity.parliament"
+      ],
+      "source": {
+        "pack": "demo-polity",
+        "page": 20
+      },
+      "origin": "source",
+      "verify": true,
+      "stage": [
+        "prelims",
+        "mains"
+      ],
+      "note": "Time-sensitive: Census 2027 is the first census after 2026, so the freeze is about to end. Check the current position before you approve."
+    },
+    {
+      "id": "demo-polity.0030",
+      "type": "fact",
+      "text": "The ___ Amendment Act, 2019 ended the nomination of Anglo-Indian members to the Lok Sabha and the State Legislative Assemblies.",
+      "answer": "104th",
+      "nodes": [
+        "cse.gs2.polity.parliament"
+      ],
+      "source": {
+        "pack": "demo-polity"
+      },
+      "origin": "model",
+      "verify": true,
+      "stage": [
+        "prelims"
+      ],
+      "note": "Added to correct older sources that still list two nominated Anglo-Indian members of the Lok Sabha."
+    }
+  ],
+  "probes": [
+    {
+      "id": "demo-polity.p001",
+      "atoms": [
+        "demo-polity.0001"
+      ],
+      "format": "cloze",
+      "stem": "The words \"socialist\" and \"secular\" were added to the Preamble by the ___ Amendment Act, 1976.",
+      "answer": "42nd",
+      "explanation": "The 42nd Amendment (1976) added \"socialist\", \"secular\" and \"integrity\"; it is the only amendment made to the Preamble so far.",
+      "difficulty": 1
+    },
+    {
+      "id": "demo-polity.p002",
+      "atoms": [
+        "demo-polity.0013"
+      ],
+      "format": "tf",
+      "stem": "True or false?",
+      "statements": [
+        {
+          "text": "The President nominates 14 members to the Rajya Sabha.",
+          "true": false,
+          "trap": "number-swap",
+          "reason": "The President nominates 12 members."
+        }
+      ],
+      "explanation": "Article 80 provides for 12 members nominated by the President for special knowledge of literature, science, art and social service.",
+      "difficulty": 1
+    },
+    {
+      "id": "demo-polity.p003",
+      "atoms": [
+        "demo-polity.0015",
+        "demo-polity.0016"
+      ],
+      "format": "statement",
+      "stem": "Consider the following statements about questions in Parliament:",
+      "statements": [
+        {
+          "text": "Starred questions are answered orally and supplementary questions may follow.",
+          "true": true,
+          "trap": null,
+          "reason": "This is what makes a question starred."
+        },
+        {
+          "text": "Unstarred questions allow supplementary questions because they are answered in writing.",
+          "true": false,
+          "trap": "cause-effect",
+          "reason": "A written answer is exactly why no supplementaries follow."
+        }
+      ],
+      "options": [
+        "1 only",
+        "2 only",
+        "Both 1 and 2",
+        "Neither 1 nor 2"
+      ],
+      "answer": 0,
+      "explanation": "Only statement 1 is correct.",
+      "difficulty": 1
+    },
+    {
+      "id": "demo-polity.p004",
+      "atoms": [
+        "demo-polity.0018",
+        "demo-polity.0019",
+        "demo-polity.0021"
+      ],
+      "format": "statement",
+      "stem": "Consider the following statements about Money Bills:\n1. A Money Bill can be introduced only in the Lok Sabha.\n2. The Rajya Sabha can hold back a Money Bill for up to 30 days.\n3. A deadlock over a Money Bill can be resolved at a joint sitting.\nWhich of the statements given above is/are correct?",
+      "statements": [
+        {
+          "text": "A Money Bill can be introduced only in the Lok Sabha.",
+          "true": true,
+          "trap": null,
+          "reason": "Article 109(1)."
+        },
+        {
+          "text": "The Rajya Sabha can hold back a Money Bill for up to 30 days.",
+          "true": false,
+          "trap": "number-swap",
+          "reason": "It must return the Bill within 14 days."
+        },
+        {
+          "text": "A deadlock over a Money Bill can be resolved at a joint sitting.",
+          "true": false,
+          "trap": "scope-creep",
+          "reason": "Joint sittings cover ordinary Bills only; on a Money Bill the Lok Sabha's view prevails."
+        }
+      ],
+      "options": [
+        "1 only",
+        "1 and 2 only",
+        "2 and 3 only",
+        "1, 2 and 3"
+      ],
+      "answer": 0,
+      "explanation": "Only statement 1 is correct: the Rajya Sabha has 14 days, and Article 108 joint sittings do not apply to Money Bills.",
+      "difficulty": 2
+    },
+    {
+      "id": "demo-polity.p005",
+      "atoms": [
+        "demo-polity.0006",
+        "demo-polity.0007"
+      ],
+      "format": "statement",
+      "stem": "Consider the following statements:\n1. Article 32 is itself a Fundamental Right.\n2. High Courts can issue writs only to enforce Fundamental Rights.\nWhich of the statements given above is/are correct?",
+      "statements": [
+        {
+          "text": "Article 32 is itself a Fundamental Right.",
+          "true": true,
+          "trap": null,
+          "reason": "It sits in Part III; Ambedkar called it the heart and soul of the Constitution."
+        },
+        {
+          "text": "High Courts can issue writs only to enforce Fundamental Rights.",
+          "true": false,
+          "trap": "scope-creep",
+          "reason": "Article 226 also allows writs \"for any other purpose\"."
+        }
+      ],
+      "options": [
+        "1 only",
+        "2 only",
+        "Both 1 and 2",
+        "Neither 1 nor 2"
+      ],
+      "answer": 0,
+      "explanation": "Only statement 1 is correct: Article 226 lets High Courts issue writs for any other purpose as well.",
+      "difficulty": 2
+    },
+    {
+      "id": "demo-polity.p006",
+      "atoms": [
+        "demo-polity.0014",
+        "demo-polity.0020"
+      ],
+      "format": "notCorrect",
+      "stem": "Which one of the following statements about the Speaker of the Lok Sabha is NOT correct?",
+      "options": [
+        "The Speaker addresses a resignation to the Deputy Speaker.",
+        "The Speaker presides over a joint sitting of the two Houses.",
+        "The Speaker is chosen by the members of the Lok Sabha from among themselves.",
+        "The Speaker addresses a resignation to the President."
+      ],
+      "answer": 3,
+      "explanation": "Article 94(b): the Speaker resigns by writing to the Deputy Speaker, not to the President. Article 118(4): the Speaker presides over joint sittings.",
+      "difficulty": 2
+    },
+    {
+      "id": "demo-polity.p007",
+      "atoms": [
+        "demo-polity.0012",
+        "demo-polity.0009",
+        "demo-polity.0025"
+      ],
+      "format": "match",
+      "stem": "Match each Amendment Act with what it did:",
+      "pairs": [
+        [
+          "42nd Amendment (1976)",
+          "Fundamental Duties added"
+        ],
+        [
+          "44th Amendment (1978)",
+          "Right to property removed from Part III"
+        ],
+        [
+          "73rd Amendment (1992)",
+          "Part IX on Panchayats added"
+        ]
+      ],
+      "explanation": "42nd (1976) added Fundamental Duties; 44th (1978) removed the right to property from Part III; 73rd (1992) added Part IX on Panchayats.",
+      "difficulty": 2
+    },
+    {
+      "id": "demo-polity.p008",
+      "atoms": [
+        "demo-polity.0003",
+        "demo-polity.0024",
+        "demo-polity.0002"
+      ],
+      "format": "order",
+      "stem": "Arrange these Supreme Court decisions in chronological order:",
+      "items": [
+        "Berubari Union reference",
+        "Golaknath v. State of Punjab",
+        "Kesavananda Bharati v. State of Kerala",
+        "Minerva Mills v. Union of India"
+      ],
+      "explanation": "Berubari Union reference 1960, Golaknath 1967, Kesavananda Bharati 1973, Minerva Mills 1980.",
+      "difficulty": 2
+    },
+    {
+      "id": "demo-polity.p009",
+      "atoms": [
+        "demo-polity.0005",
+        "demo-polity.0006",
+        "demo-polity.0011"
+      ],
+      "format": "odd",
+      "stem": "Which one is the odd one out?",
+      "options": [
+        "Article 14",
+        "Article 17",
+        "Article 32",
+        "Article 37"
+      ],
+      "answer": 3,
+      "explanation": "Articles 14, 17 and 32 are in Part III (Fundamental Rights); Article 37 is in Part IV (Directive Principles).",
+      "difficulty": 1
+    },
+    {
+      "id": "demo-polity.p010",
+      "atoms": [
+        "demo-polity.0011"
+      ],
+      "format": "assertionReason",
+      "stem": "Consider the following statements:\nStatement-I: No court can enforce the Directive Principles of State Policy.\nStatement-II: Article 37 declares the Directive Principles fundamental in the governance of the country.\nWhich one of the following is correct in respect of the above statements?",
+      "statements": [
+        {
+          "text": "Statement-I: No court can enforce the Directive Principles of State Policy.",
+          "true": true,
+          "trap": null,
+          "reason": "Article 37 says so expressly."
+        },
+        {
+          "text": "Statement-II: Article 37 declares the Directive Principles fundamental in the governance of the country.",
+          "true": true,
+          "trap": null,
+          "reason": "Article 37 says this too."
+        }
+      ],
+      "options": [
+        "Both Statement-I and Statement-II are correct and Statement-II explains Statement-I",
+        "Both Statement-I and Statement-II are correct, but Statement-II does not explain Statement-I",
+        "Statement-I is correct, but Statement-II is incorrect",
+        "Statement-I is incorrect, but Statement-II is correct"
+      ],
+      "answer": 1,
+      "explanation": "Both are in Article 37, but being fundamental in governance does not explain why courts cannot enforce them; non-justiciability is a separate, express choice.",
+      "difficulty": 2
+    },
+    {
+      "id": "demo-polity.p011",
+      "atoms": [
+        "demo-polity.0026"
+      ],
+      "format": "identify",
+      "stem": "Identify the body: it is constituted by the President under Article 280; it recommends how the net proceeds of taxes are shared between the Union and the States; it is constituted every fifth year or earlier.",
+      "options": [
+        "Finance Commission",
+        "NITI Aayog",
+        "Inter-State Council",
+        "GST Council"
+      ],
+      "answer": 0,
+      "explanation": "These are the Finance Commission's defining features under Article 280.",
+      "difficulty": 1
+    },
+    {
+      "id": "demo-polity.p012",
+      "atoms": [
+        "demo-polity.0018",
+        "demo-polity.0019",
+        "demo-polity.0021"
+      ],
+      "format": "explain",
+      "stem": "Explain why the Rajya Sabha cannot block a Money Bill.",
+      "keyPoints": [
+        "A Money Bill can be introduced only in the Lok Sabha (Article 109)",
+        "The Rajya Sabha must return it within 14 days",
+        "The Lok Sabha may accept or reject the Rajya Sabha's recommendations",
+        "If not returned within 14 days, it is deemed passed by both Houses",
+        "No joint sitting is held on a Money Bill"
+      ],
+      "explanation": "Article 109 gives the Rajya Sabha only a recommending role on Money Bills.",
+      "difficulty": 2
+    },
+    {
+      "id": "demo-polity.p013",
+      "atoms": [
+        "demo-polity.0025"
+      ],
+      "format": "cloze",
+      "stem": "Panchayats got constitutional status through the ___ Amendment Act, 1992.",
+      "answer": "73rd",
+      "explanation": "The 73rd Amendment added Part IX and the Eleventh Schedule; the 74th did the same for municipalities with Part IXA and the Twelfth Schedule.",
+      "difficulty": 1
+    },
+    {
+      "id": "demo-polity.p014",
+      "atoms": [
+        "demo-polity.0022"
+      ],
+      "format": "statement",
+      "stem": "Consider the following statements:\n1. A proclamation under Article 356 automatically dissolves the State Legislative Assembly.\n2. While President's Rule is in force, the powers of the State Legislature can be exercised by or under the authority of Parliament.\nWhich of the statements given above is/are correct?",
+      "statements": [
+        {
+          "text": "A proclamation under Article 356 automatically dissolves the State Legislative Assembly.",
+          "true": false,
+          "trap": "scope-creep",
+          "reason": "Dissolution is a choice, not automatic; the Assembly may be kept in suspended animation."
+        },
+        {
+          "text": "While President's Rule is in force, the powers of the State Legislature can be exercised by or under the authority of Parliament.",
+          "true": true,
+          "trap": null,
+          "reason": "Article 356(1)(b)."
+        }
+      ],
+      "options": [
+        "1 only",
+        "2 only",
+        "Both 1 and 2",
+        "Neither 1 nor 2"
+      ],
+      "answer": 1,
+      "explanation": "Only statement 2 is correct (Article 356(1)(b)); the Assembly may be dissolved or kept in suspended animation.",
+      "difficulty": 2
+    },
+    {
+      "id": "demo-polity.p015",
+      "atoms": [
+        "demo-polity.0008"
+      ],
+      "format": "match",
+      "stem": "Match each writ with the meaning of its name:",
+      "pairs": [
+        [
+          "Habeas corpus",
+          "To have the body"
+        ],
+        [
+          "Mandamus",
+          "We command"
+        ],
+        [
+          "Quo warranto",
+          "By what authority"
+        ],
+        [
+          "Certiorari",
+          "To be certified"
+        ]
+      ],
+      "explanation": "Habeas corpus: to have the body; mandamus: we command; quo warranto: by what authority; certiorari: to be certified.",
+      "difficulty": 1
+    }
+  ],
+  "pyqs": [
+    {
+      "id": "demo-pyq-2017-preamble",
+      "year": 2017,
+      "paper": "cse.pre.gs1",
+      "format": "single",
+      "stem": "Which one of the following objectives is not embodied in the Preamble to the Constitution of India?",
+      "options": [
+        "Liberty of thought",
+        "Economic liberty",
+        "Liberty of expression",
+        "Liberty of belief"
+      ],
+      "answer": 1,
+      "answerSource": "unverified",
+      "nodes": [
+        "cse.gs2.polity.preamble"
+      ],
+      "atoms": [
+        "demo-polity.0004"
+      ],
+      "traps": [],
+      "elimination": "Recall the liberty clause: thought, expression, belief, faith and worship.\nThree options appear in it word for word.\nThe Preamble has economic justice, not economic liberty, so (b)."
+    },
+    {
+      "id": "demo-pyq-2018-governor",
+      "year": 2018,
+      "paper": "cse.pre.gs1",
+      "format": "statement",
+      "stem": "Consider the following statements:\n1. No criminal proceedings shall be instituted against the Governor of a State in any court during his term of office.\n2. The emoluments and allowances of the Governor of a State shall not be diminished during his term of office.\nWhich of the statements given above is/are correct?",
+      "options": [
+        "1 only",
+        "2 only",
+        "Both 1 and 2",
+        "Neither 1 nor 2"
+      ],
+      "answer": 2,
+      "answerSource": "unverified",
+      "nodes": [
+        "cse.gs2.polity.state"
+      ],
+      "atoms": [
+        "demo-polity.0023"
+      ],
+      "traps": [],
+      "elimination": "Statement 1 is Article 361(2).\nStatement 2 is Article 158(4).\nBoth are correct, so (c)."
+    },
+    {
+      "id": "demo-pyq-2017-presidents-rule",
+      "year": 2017,
+      "paper": "cse.pre.gs1",
+      "format": "statement",
+      "stem": "Which of the following are not necessarily the consequences of the proclamation of the President's rule in a State?\n1. Dissolution of the State Legislative Assembly\n2. Removal of the Council of Ministers in the State\n3. Dissolution of the local bodies\nSelect the correct answer using the code given below:",
+      "options": [
+        "1 and 2 only",
+        "1 and 3 only",
+        "2 and 3 only",
+        "1, 2 and 3"
+      ],
+      "answer": 1,
+      "answerSource": "unverified",
+      "nodes": [
+        "cse.gs2.polity.emergency"
+      ],
+      "atoms": [
+        "demo-polity.0022"
+      ],
+      "traps": [
+        {
+          "statement": 2,
+          "tag": "partial-truth"
+        }
+      ],
+      "elimination": "The President takes over the State government's functions, so the Council of Ministers necessarily goes: drop 2.\nThe Assembly may be dissolved or kept in suspended animation: 1 is not necessary.\nLocal bodies are not touched by Article 356: 3 is not a consequence, so (b)."
+    },
+    {
+      "id": "demo-pyq-2018-subordinate-legislation",
+      "year": 2018,
+      "paper": "cse.pre.gs1",
+      "format": "identify",
+      "stem": "With reference to the Parliament of India, which one of the following parliamentary committees scrutinizes and reports to the House whether the powers to make regulations, rules, sub-rules, by-laws, etc. conferred by the Constitution or delegated by the Parliament are being properly exercised by the executive within the scope of such delegation?",
+      "options": [
+        "Committee on Government Assurances",
+        "Committee on Subordinate Legislation",
+        "Rules Committee",
+        "Business Advisory Committee"
+      ],
+      "answer": 1,
+      "answerSource": "unverified",
+      "nodes": [
+        "cse.gs2.polity.parliament.devices"
+      ],
+      "atoms": [
+        "demo-polity.0017"
+      ],
+      "traps": [],
+      "elimination": "Government Assurances tracks ministers' promises made on the floor.\nThe Rules Committee handles the House's own procedure; Business Advisory allots time.\nDelegated rule-making is checked by Subordinate Legislation, so (b)."
+    },
+    {
+      "id": "demo-pyq-2020-untouchability",
+      "year": 2020,
+      "paper": "cse.pre.gs1",
+      "format": "single",
+      "stem": "Which one of the following categories of Fundamental Rights incorporates protection against untouchability as a form of discrimination?",
+      "options": [
+        "Right against Exploitation",
+        "Right to Freedom",
+        "Right to Constitutional Remedies",
+        "Right to Equality"
+      ],
+      "answer": 3,
+      "answerSource": "unverified",
+      "nodes": [
+        "cse.gs2.polity.fr"
+      ],
+      "atoms": [
+        "demo-polity.0005"
+      ],
+      "traps": [],
+      "elimination": "Untouchability is abolished by Article 17.\nArticles 14 to 18 make up the Right to Equality.\nSo (d); the Right against Exploitation is Articles 23 and 24."
+    }
+  ],
+  "ca": [
+    {
+      "id": "demo-ca-2025-06-census-2027",
+      "date": "2025-06-16",
+      "headline": "Census 2027 notified, with caste enumeration",
+      "whyInNews": "The Union government notified Census 2027 with reference date 1 March 2027 (1 October 2026 for snow-bound areas); it will also enumerate caste.",
+      "anchors": [
+        "cse.gs2.polity.parliament"
+      ],
+      "atoms": [
+        "demo-polity.0029"
+      ],
+      "shelfLifeDays": 540,
+      "mainsAngle": [
+        "Delimitation and the end of the 1971-based seat freeze",
+        "Women's reservation takes effect only after the delimitation that follows this census"
+      ],
+      "probableQs": [
+        {
+          "stage": "mains",
+          "text": "Discuss the implications of the first post-2026 census for the federal balance of representation in the Lok Sabha."
+        }
+      ]
+    },
+    {
+      "id": "demo-ca-2025-08-130th-amendment-bill",
+      "date": "2025-08-20",
+      "headline": "Constitution (130th Amendment) Bill, 2025 introduced and sent to a Joint Committee",
+      "whyInNews": "The Bill would remove a Prime Minister, Chief Minister or minister held in custody for 30 consecutive days on serious charges; it went to a Joint Parliamentary Committee.",
+      "anchors": [
+        "cse.gs2.polity.executive",
+        "cse.gs2.polity.amendment"
+      ],
+      "atoms": [
+        "demo-polity.0028"
+      ],
+      "shelfLifeDays": 540,
+      "mainsAngle": [
+        "Constitutional morality versus presumption of innocence",
+        "Article 75 and the collective responsibility of the Council of Ministers"
+      ],
+      "probableQs": [
+        {
+          "stage": "prelims",
+          "text": "Which Articles on the Council of Ministers would the 130th Amendment Bill change?"
+        }
+      ]
+    },
+    {
+      "id": "demo-ca-2025-09-vice-president-election",
+      "date": "2025-09-09",
+      "headline": "C. P. Radhakrishnan elected Vice-President",
+      "whyInNews": "An election was held after Jagdeep Dhankhar resigned in July 2025; C. P. Radhakrishnan won and became ex officio Chairman of the Rajya Sabha.",
+      "anchors": [
+        "cse.gs2.polity.executive"
+      ],
+      "atoms": [
+        "demo-polity.0027"
+      ],
+      "shelfLifeDays": 540,
+      "mainsAngle": [
+        "The Vice-President is elected by an electoral college of members of both Houses (Article 66)"
+      ],
+      "probableQs": [
+        {
+          "stage": "prelims",
+          "text": "Who elects the Vice-President of India, and who is excluded from that electoral college compared with the President's?"
+        }
+      ]
+    }
+  ],
+  "answers": [
+    {
+      "id": "demo-polity.ans01",
+      "question": "Discuss the role of the Rajya Sabha as the chamber that represents the States in India's federal structure.",
+      "paper": "cse.mains.gs2",
+      "marks": 10,
+      "directive": "Discuss",
+      "words": 150,
+      "skeleton": {
+        "intro": "The Rajya Sabha (Article 80) is the Council of States: a permanent House whose members are elected by the State Legislative Assemblies.",
+        "body": [
+          "Representation: members are elected by elected MLAs through proportional representation by single transferable vote",
+          "Federal powers of its own: Article 249 (Parliament may legislate on a State List subject) and Article 312 (new All India Services)",
+          "Revising chamber: an equal say on ordinary and Constitution Amendment Bills, a check on hasty legislation",
+          "Limits: only 14 days on Money Bills, and at a joint sitting the larger Lok Sabha prevails"
+        ],
+        "conclusion": "It is a federal check rather than a co-equal House; careful use of Money Bill certification and stronger committee scrutiny keep that check meaningful."
+      },
+      "dimensions": [
+        "constitutional",
+        "federal",
+        "legislative",
+        "political"
+      ],
+      "valueAdds": [
+        {
+          "type": "article",
+          "text": "Article 249: a Rajya Sabha resolution backed by two-thirds of members present and voting lets Parliament legislate on a State List matter in the national interest"
+        },
+        {
+          "type": "article",
+          "text": "Article 312: new All India Services are created on a Rajya Sabha resolution"
+        },
+        {
+          "type": "data",
+          "text": "Only three joint sittings so far: 1961 (Dowry Prohibition), 1978 (Banking Service Commission Repeal), 2002 (Prevention of Terrorism)"
+        }
+      ],
+      "source": {
+        "pack": "demo-polity",
+        "page": 26
+      }
+    }
+  ],
+  "notes": [
+    {
+      "node": "cse.gs2.polity.parliament.devices",
+      "level": 1,
+      "text": "Questions: starred = oral, supplementaries allowed; unstarred = written, none. Short notice question: oral, asked at less than 10 days' notice. Zero Hour: Indian innovation, not in the Rules of Procedure. Delegated rule-making is checked by the Committee on Subordinate Legislation.",
+      "source": {
+        "pack": "demo-polity",
+        "page": 21
+      }
+    }
+  ]
+}

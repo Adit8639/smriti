@@ -1,0 +1,260 @@
+{
+  "id": "capf-ac-2027",
+  "version": 1,
+  "exam": "capf-ac",
+  "name": "UPSC CAPF AC 2027",
+  "subtitle": "Assistant Commandants: Paper I (objective) and Paper II (descriptive), one day",
+  "nodePrefix": "capf",
+  "notes": [
+    "Exam date from the UPSC calendar 2027 (notification due 17 Feb 2027). Paper I question count and negative marking follow recent papers (125 questions, one-third negative); confirm them against the 2027 notice.",
+    "Phase boundaries are a default (exam focus from 1 April); edit them to suit your plan.",
+    "Paper II is one 3-hour, 200-mark sitting; Parts A and B share the 180 minutes."
+  ],
+  "dates": {
+    "written": {
+      "label": "Written exam (Paper I and II)",
+      "date": "2027-07-04",
+      "tentative": false
+    }
+  },
+  "phases": [
+    {
+      "id": "foundation",
+      "name": "Foundation",
+      "until": "2027-03-31"
+    },
+    {
+      "id": "exam",
+      "name": "Exam focus",
+      "until": "@written"
+    }
+  ],
+  "targets": {
+    "cardSeconds": 8
+  },
+  "papers": [
+    {
+      "id": "capf.p1",
+      "name": "Paper I: General Ability and Intelligence",
+      "stage": "written",
+      "type": "mcq",
+      "questions": 125,
+      "marks": 250,
+      "durationMin": 120,
+      "negativeFraction": 0.3333333333333333,
+      "qualifyingPct": null,
+      "formatMix": null,
+      "wordLimits": null,
+      "minutesPerAnswer": null
+    },
+    {
+      "id": "capf.p2a",
+      "name": "Paper II Part A: Essay (English or Hindi)",
+      "stage": "written",
+      "type": "descriptive",
+      "questions": null,
+      "marks": 80,
+      "durationMin": 180,
+      "negativeFraction": null,
+      "qualifyingPct": null,
+      "formatMix": null,
+      "wordLimits": null,
+      "minutesPerAnswer": null
+    },
+    {
+      "id": "capf.p2b",
+      "name": "Paper II Part B: Comprehension, précis, counter-arguments (English)",
+      "stage": "written",
+      "type": "descriptive",
+      "questions": null,
+      "marks": 120,
+      "durationMin": 180,
+      "negativeFraction": null,
+      "qualifyingPct": null,
+      "formatMix": null,
+      "wordLimits": null,
+      "minutesPerAnswer": null
+    }
+  ],
+  "syllabus": [
+    {
+      "id": "capf.p1",
+      "parent": null,
+      "paper": "capf.p1",
+      "title": "Paper I: General Ability and Intelligence",
+      "keywords": [
+        "capf paper 1",
+        "general ability",
+        "objective"
+      ],
+      "description": "CAPF AC Paper I, objective."
+    },
+    {
+      "id": "capf.p1.mental",
+      "parent": "capf.p1",
+      "paper": "capf.p1",
+      "title": "General mental ability",
+      "keywords": [
+        "logical reasoning",
+        "quantitative aptitude",
+        "numerical ability",
+        "data interpretation"
+      ],
+      "description": "Logical reasoning, quantitative aptitude including numerical ability, and data interpretation."
+    },
+    {
+      "id": "capf.p1.science",
+      "parent": "capf.p1",
+      "paper": "capf.p1",
+      "title": "General science",
+      "keywords": [
+        "general science",
+        "physics",
+        "chemistry",
+        "biology",
+        "scientific temper",
+        "technology"
+      ],
+      "description": "General awareness and scientific temper, including information technology, biotechnology and environmental science."
+    },
+    {
+      "id": "capf.p1.ca",
+      "parent": "capf.p1",
+      "paper": "capf.p1",
+      "title": "Current events of national and international importance",
+      "keywords": [
+        "current affairs",
+        "culture",
+        "music",
+        "arts",
+        "literature",
+        "sports",
+        "governance",
+        "trade"
+      ],
+      "description": "Current events in culture, arts, literature, sports, governance, societal and developmental issues, industry and trade."
+    },
+    {
+      "id": "capf.p1.polity-economy",
+      "parent": "capf.p1",
+      "paper": "capf.p1",
+      "title": "Indian polity and economy",
+      "keywords": [
+        "constitution",
+        "polity",
+        "economy",
+        "planning",
+        "governance",
+        "rights"
+      ],
+      "description": "The Constitution, political system, public administration, economic development, and regional and international security."
+    },
+    {
+      "id": "capf.p1.history",
+      "parent": "capf.p1",
+      "paper": "capf.p1",
+      "title": "History of India",
+      "keywords": [
+        "indian history",
+        "freedom movement",
+        "socio-economic history",
+        "political history"
+      ],
+      "description": "Social, economic and political aspects of Indian history, with growth of nationalism and the freedom movement."
+    },
+    {
+      "id": "capf.p1.geography",
+      "parent": "capf.p1",
+      "paper": "capf.p1",
+      "title": "Indian and world geography",
+      "keywords": [
+        "physical geography",
+        "social geography",
+        "economic geography",
+        "india",
+        "world"
+      ],
+      "description": "Physical, social and economic geography of India and the world."
+    },
+    {
+      "id": "capf.p2a",
+      "parent": null,
+      "paper": "capf.p2a",
+      "title": "Paper II Part A: Essay",
+      "keywords": [
+        "capf paper 2",
+        "essay",
+        "hindi or english",
+        "long answer"
+      ],
+      "description": "Essay questions in long narrative form, in Hindi or English, totalling 80 marks."
+    },
+    {
+      "id": "capf.p2a.topics",
+      "parent": "capf.p2a",
+      "paper": "capf.p2a",
+      "title": "Essay themes",
+      "keywords": [
+        "freedom struggle",
+        "modern indian history",
+        "geography",
+        "polity and economy",
+        "security",
+        "human rights",
+        "analytical ability"
+      ],
+      "description": "Indicative themes: modern Indian history (especially the freedom struggle), geography, polity and economy, security and human rights, analytical ability."
+    },
+    {
+      "id": "capf.p2b",
+      "parent": null,
+      "paper": "capf.p2b",
+      "title": "Paper II Part B: Comprehension and précis",
+      "keywords": [
+        "comprehension",
+        "precis",
+        "communication",
+        "english",
+        "counter arguments"
+      ],
+      "description": "Comprehension, précis writing and other communication and language skills, in English only (120 marks)."
+    },
+    {
+      "id": "capf.p2b.comprehension",
+      "parent": "capf.p2b",
+      "paper": "capf.p2b",
+      "title": "Comprehension",
+      "keywords": [
+        "reading comprehension",
+        "passage",
+        "questions"
+      ],
+      "description": "Comprehension passages with questions."
+    },
+    {
+      "id": "capf.p2b.precis",
+      "parent": "capf.p2b",
+      "paper": "capf.p2b",
+      "title": "Précis writing",
+      "keywords": [
+        "precis",
+        "summary",
+        "one-third length"
+      ],
+      "description": "Précis writing to about one third of the passage length."
+    },
+    {
+      "id": "capf.p2b.language",
+      "parent": "capf.p2b",
+      "paper": "capf.p2b",
+      "title": "Arguments, reports and language skills",
+      "keywords": [
+        "counter arguments",
+        "report writing",
+        "grammar",
+        "language skills"
+      ],
+      "description": "Counter-arguments, report writing, and other communication and language skills."
+    }
+  ]
+}

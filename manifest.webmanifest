@@ -1,0 +1,17 @@
+{
+  "id": "./",
+  "name": "SMRITI — UPSC Active-Recall OS",
+  "short_name": "SMRITI",
+  "description": "Offline active-recall system for UPSC CSE and CAPF AC.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f6f7f9",
+  "theme_color": "#1d4f91",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

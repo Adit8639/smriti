@@ -1,0 +1,202 @@
+{
+  "pack": {
+    "id": "demo-polity-syllabus",
+    "version": 1,
+    "kind": "syllabus",
+    "exam": [
+      "cse"
+    ],
+    "title": "Demo: Indian Polity topics",
+    "createdAt": "2026-10-30",
+    "source": {
+      "title": "Demo Source",
+      "edition": "1"
+    },
+    "report": {
+      "counts": {
+        "nodes": 12
+      },
+      "doubts": [],
+      "unmapped": [],
+      "skipped": [],
+      "nodeCounts": {}
+    }
+  },
+  "nodes": [
+    {
+      "id": "cse.gs2.polity.preamble",
+      "parent": "cse.gs2.polity",
+      "paper": "cse.mains.gs2",
+      "title": "Preamble and salient features",
+      "keywords": [
+        "preamble",
+        "socialist",
+        "secular",
+        "sovereign",
+        "liberty",
+        "berubari",
+        "kesavananda"
+      ],
+      "description": "The Preamble, its amendment and its status as part of the Constitution."
+    },
+    {
+      "id": "cse.gs2.polity.fr",
+      "parent": "cse.gs2.polity",
+      "paper": "cse.mains.gs2",
+      "title": "Fundamental Rights and writs",
+      "keywords": [
+        "fundamental rights",
+        "part iii",
+        "article 32",
+        "article 226",
+        "writs",
+        "untouchability",
+        "right to property"
+      ],
+      "description": "Part III rights, the writ jurisdiction of the Supreme Court and High Courts, and key amendments to rights."
+    },
+    {
+      "id": "cse.gs2.polity.dpsp",
+      "parent": "cse.gs2.polity",
+      "paper": "cse.mains.gs2",
+      "title": "Directive Principles and Fundamental Duties",
+      "keywords": [
+        "dpsp",
+        "part iv",
+        "article 37",
+        "fundamental duties",
+        "article 51a",
+        "swaran singh"
+      ],
+      "description": "Part IV principles, their non-justiciability, and the Fundamental Duties added in 1976."
+    },
+    {
+      "id": "cse.gs2.polity.parliament",
+      "parent": "cse.gs2.polity",
+      "paper": "cse.mains.gs2",
+      "title": "Parliament: composition and presiding officers",
+      "keywords": [
+        "parliament",
+        "lok sabha",
+        "rajya sabha",
+        "speaker",
+        "nominated members",
+        "delimitation"
+      ],
+      "description": "Composition of the two Houses, nominated members, seat allocation, and the Speaker's office."
+    },
+    {
+      "id": "cse.gs2.polity.parliament.devices",
+      "parent": "cse.gs2.polity.parliament",
+      "paper": "cse.mains.gs2",
+      "title": "Parliamentary devices: questions and committees",
+      "keywords": [
+        "starred question",
+        "unstarred question",
+        "question hour",
+        "zero hour",
+        "committee on subordinate legislation"
+      ],
+      "description": "Questions, Zero Hour and committees through which Parliament holds the executive to account."
+    },
+    {
+      "id": "cse.gs2.polity.parliament.legislation",
+      "parent": "cse.gs2.polity.parliament",
+      "paper": "cse.mains.gs2",
+      "title": "Law-making: Money Bills and joint sittings",
+      "keywords": [
+        "money bill",
+        "article 109",
+        "article 110",
+        "joint sitting",
+        "article 108"
+      ],
+      "description": "The special procedure for Money Bills and the joint sitting of the two Houses."
+    },
+    {
+      "id": "cse.gs2.polity.executive",
+      "parent": "cse.gs2.polity",
+      "paper": "cse.mains.gs2",
+      "title": "Union executive: President, Vice-President and ministers",
+      "keywords": [
+        "president",
+        "vice-president",
+        "council of ministers",
+        "article 66",
+        "article 75"
+      ],
+      "description": "Election and powers of the President and Vice-President, and the Council of Ministers."
+    },
+    {
+      "id": "cse.gs2.polity.state",
+      "parent": "cse.gs2.polity",
+      "paper": "cse.mains.gs2",
+      "title": "States: Governor and State government",
+      "keywords": [
+        "governor",
+        "article 361",
+        "article 158",
+        "state executive"
+      ],
+      "description": "The Governor's office, immunities and conditions of service."
+    },
+    {
+      "id": "cse.gs2.polity.emergency",
+      "parent": "cse.gs2.polity",
+      "paper": "cse.mains.gs2",
+      "title": "Emergency provisions",
+      "keywords": [
+        "emergency",
+        "article 352",
+        "article 356",
+        "president's rule",
+        "article 360"
+      ],
+      "description": "National Emergency, President's Rule in the States and Financial Emergency."
+    },
+    {
+      "id": "cse.gs2.polity.amendment",
+      "parent": "cse.gs2.polity",
+      "paper": "cse.mains.gs2",
+      "title": "Amendment and the basic structure",
+      "keywords": [
+        "amendment",
+        "article 368",
+        "basic structure",
+        "kesavananda bharati",
+        "golaknath",
+        "minerva mills"
+      ],
+      "description": "The amending power of Parliament and the basic structure doctrine."
+    },
+    {
+      "id": "cse.gs2.polity.local",
+      "parent": "cse.gs2.polity",
+      "paper": "cse.mains.gs2",
+      "title": "Panchayats and municipalities",
+      "keywords": [
+        "panchayati raj",
+        "73rd amendment",
+        "74th amendment",
+        "part ix",
+        "part ixa",
+        "local government"
+      ],
+      "description": "Constitutional status of rural and urban local government."
+    },
+    {
+      "id": "cse.gs2.polity.bodies",
+      "parent": "cse.gs2.polity",
+      "paper": "cse.mains.gs2",
+      "title": "Constitutional bodies",
+      "keywords": [
+        "finance commission",
+        "article 280",
+        "cag",
+        "election commission",
+        "constitutional bodies"
+      ],
+      "description": "Bodies created by the Constitution, such as the Finance Commission."
+    }
+  ]
+}

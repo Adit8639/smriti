@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SMRITI self-tests</title>
+  <link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+  <style>
+    :root { color-scheme: light dark; --ok: #17703a; --bad: #b3261e; }
+    @media (prefers-color-scheme: dark) { :root { --ok: #7ad49a; --bad: #ff8a80; } }
+    body { font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; margin: 0 auto; max-width: 760px; padding: 1rem; }
+    h1 { font-size: 1.3rem; margin: 0 0 0.25rem; }
+    h2 { font-size: 1rem; margin: 1.25rem 0 0.25rem; }
+    ul { list-style: none; padding: 0; margin: 0; }
+    li { padding: 0.35rem 0; border-bottom: 1px solid rgba(127, 127, 127, 0.25); font-size: 0.92rem; }
+    li.pass { color: var(--ok); }
+    li.fail { color: var(--bad); font-weight: 600; }
+    pre { white-space: pre-wrap; font-size: 0.82rem; margin: 0.25rem 0 0; }
+    .summary { font-weight: 700; font-size: 1.05rem; padding: 0.6rem 0.75rem; border-radius: 10px; background: rgba(127, 127, 127, 0.12); }
+    .summary.pass { color: var(--ok); }
+    .summary.fail { color: var(--bad); }
+    .row { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin: 0.5rem 0 1rem; }
+    button, a.btn { min-height: 44px; padding: 0.4rem 1rem; border-radius: 10px; border: 1px solid rgba(127, 127, 127, 0.5); background: none; color: inherit; font: inherit; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; }
+  </style>
+  <script type="module" src="tests.js"></script>
+</head>
+<body>
+  <h1>SMRITI self-tests</h1>
+  <p>Validator, merge, rebuild and end-to-end storage tests. The storage tests use throwaway databases, so your real data is not touched. Works offline once the app is cached.</p>
+  <div class="row">
+    <button id="rerun" type="button">Run again</button>
+    <a class="btn" href="../">Back to the app</a>
+  </div>
+  <p id="summary" class="summary">Starting…</p>
+  <div id="results"></div>
+</body>
+</html>

@@ -1,0 +1,1259 @@
+{
+  "id": "cse-2028",
+  "version": 1,
+  "exam": "cse",
+  "name": "UPSC CSE 2028",
+  "subtitle": "Optional: Anthropology (Papers I and II)",
+  "nodePrefix": "cse",
+  "notes": [
+    "The 2028 UPSC calendar is not out yet (expected around May 2027). Prelims and Mains dates are tentative, following the 2027 pattern (Prelims 23 May 2027, Mains from 20 Aug 2027). Edit them when the calendar is published.",
+    "GS-IV mixes theory questions and case studies, so its question count is left blank. Optional papers: answer 5 of 8 questions (Q1 and Q5 compulsory), 50 marks each. The two language papers are qualifying only and do not count towards rank."
+  ],
+  "dates": {
+    "prelims": {
+      "label": "Prelims (GS-I and CSAT)",
+      "date": "2028-05-28",
+      "tentative": true
+    },
+    "mains": {
+      "label": "Mains begins",
+      "date": "2028-08-25",
+      "tentative": true
+    }
+  },
+  "phases": [
+    {
+      "id": "foundation",
+      "name": "Foundation",
+      "until": "2028-01-31"
+    },
+    {
+      "id": "prelims",
+      "name": "Prelims focus",
+      "until": "@prelims"
+    },
+    {
+      "id": "mains",
+      "name": "Mains",
+      "until": "@mains"
+    }
+  ],
+  "targets": {
+    "cardSeconds": 8
+  },
+  "papers": [
+    {
+      "id": "cse.pre.gs1",
+      "name": "Prelims GS Paper I",
+      "stage": "prelims",
+      "type": "mcq",
+      "questions": 100,
+      "marks": 200,
+      "durationMin": 120,
+      "negativeFraction": 0.3333333333333333,
+      "qualifyingPct": null,
+      "formatMix": {
+        "statement": 65,
+        "single": 9,
+        "assertionReason": 8,
+        "notCorrect": 7,
+        "identify": 5,
+        "match": 4,
+        "howMany": 2
+      },
+      "wordLimits": null,
+      "minutesPerAnswer": null
+    },
+    {
+      "id": "cse.pre.csat",
+      "name": "Prelims CSAT (Paper II)",
+      "stage": "prelims",
+      "type": "mcq",
+      "questions": 80,
+      "marks": 200,
+      "durationMin": 120,
+      "negativeFraction": 0.3333333333333333,
+      "qualifyingPct": 33,
+      "formatMix": null,
+      "wordLimits": null,
+      "minutesPerAnswer": null
+    },
+    {
+      "id": "cse.mains.essay",
+      "name": "Mains Essay",
+      "stage": "mains",
+      "type": "descriptive",
+      "questions": 2,
+      "marks": 250,
+      "durationMin": 180,
+      "negativeFraction": null,
+      "qualifyingPct": null,
+      "formatMix": null,
+      "wordLimits": {
+        "125": 1200
+      },
+      "minutesPerAnswer": null
+    },
+    {
+      "id": "cse.mains.gs1",
+      "name": "Mains GS Paper I",
+      "stage": "mains",
+      "type": "descriptive",
+      "questions": 20,
+      "marks": 250,
+      "durationMin": 180,
+      "negativeFraction": null,
+      "qualifyingPct": null,
+      "formatMix": null,
+      "wordLimits": {
+        "10": 150,
+        "15": 250
+      },
+      "minutesPerAnswer": {
+        "10": 7,
+        "15": 11
+      }
+    },
+    {
+      "id": "cse.mains.gs2",
+      "name": "Mains GS Paper II",
+      "stage": "mains",
+      "type": "descriptive",
+      "questions": 20,
+      "marks": 250,
+      "durationMin": 180,
+      "negativeFraction": null,
+      "qualifyingPct": null,
+      "formatMix": null,
+      "wordLimits": {
+        "10": 150,
+        "15": 250
+      },
+      "minutesPerAnswer": {
+        "10": 7,
+        "15": 11
+      }
+    },
+    {
+      "id": "cse.mains.gs3",
+      "name": "Mains GS Paper III",
+      "stage": "mains",
+      "type": "descriptive",
+      "questions": 20,
+      "marks": 250,
+      "durationMin": 180,
+      "negativeFraction": null,
+      "qualifyingPct": null,
+      "formatMix": null,
+      "wordLimits": {
+        "10": 150,
+        "15": 250
+      },
+      "minutesPerAnswer": {
+        "10": 7,
+        "15": 11
+      }
+    },
+    {
+      "id": "cse.mains.gs4",
+      "name": "Mains GS Paper IV (Ethics)",
+      "stage": "mains",
+      "type": "descriptive",
+      "questions": null,
+      "marks": 250,
+      "durationMin": 180,
+      "negativeFraction": null,
+      "qualifyingPct": null,
+      "formatMix": null,
+      "wordLimits": {
+        "10": 150
+      },
+      "minutesPerAnswer": {
+        "10": 7
+      }
+    },
+    {
+      "id": "cse.mains.opt1",
+      "name": "Mains Optional Paper I: Anthropology",
+      "stage": "mains",
+      "type": "descriptive",
+      "questions": 5,
+      "marks": 250,
+      "durationMin": 180,
+      "negativeFraction": null,
+      "qualifyingPct": null,
+      "formatMix": null,
+      "wordLimits": {
+        "10": 150
+      },
+      "minutesPerAnswer": {
+        "10": 7
+      }
+    },
+    {
+      "id": "cse.mains.opt2",
+      "name": "Mains Optional Paper II: Anthropology",
+      "stage": "mains",
+      "type": "descriptive",
+      "questions": 5,
+      "marks": 250,
+      "durationMin": 180,
+      "negativeFraction": null,
+      "qualifyingPct": null,
+      "formatMix": null,
+      "wordLimits": {
+        "10": 150
+      },
+      "minutesPerAnswer": {
+        "10": 7
+      }
+    },
+    {
+      "id": "cse.mains.langA",
+      "name": "Mains Paper A: Indian language (qualifying)",
+      "stage": "mains",
+      "type": "descriptive",
+      "questions": null,
+      "marks": 300,
+      "durationMin": 180,
+      "negativeFraction": null,
+      "qualifyingPct": 25,
+      "formatMix": null,
+      "wordLimits": null,
+      "minutesPerAnswer": null
+    },
+    {
+      "id": "cse.mains.langB",
+      "name": "Mains Paper B: English (qualifying)",
+      "stage": "mains",
+      "type": "descriptive",
+      "questions": null,
+      "marks": 300,
+      "durationMin": 180,
+      "negativeFraction": null,
+      "qualifyingPct": 25,
+      "formatMix": null,
+      "wordLimits": null,
+      "minutesPerAnswer": null
+    }
+  ],
+  "syllabus": [
+    {
+      "id": "cse.gs1",
+      "parent": null,
+      "paper": "cse.mains.gs1",
+      "title": "GS-I: Heritage, History, Geography and Society",
+      "keywords": [
+        "gs1",
+        "general studies 1",
+        "history",
+        "art and culture",
+        "geography",
+        "indian society"
+      ],
+      "description": "Mains GS Paper I; also covers the history, culture and geography parts of Prelims GS-I."
+    },
+    {
+      "id": "cse.gs1.culture",
+      "parent": "cse.gs1",
+      "paper": "cse.mains.gs1",
+      "title": "Indian art and culture",
+      "keywords": [
+        "art",
+        "architecture",
+        "temple architecture",
+        "sculpture",
+        "painting",
+        "music",
+        "dance",
+        "literature",
+        "heritage"
+      ],
+      "description": "Salient aspects of art forms, literature and architecture from ancient to modern times."
+    },
+    {
+      "id": "cse.gs1.history",
+      "parent": "cse.gs1",
+      "paper": "cse.mains.gs1",
+      "title": "History",
+      "keywords": [
+        "history",
+        "indian history",
+        "freedom struggle",
+        "national movement"
+      ],
+      "description": "Indian history from ancient times to post-independence, and world history."
+    },
+    {
+      "id": "cse.gs1.history.ancient",
+      "parent": "cse.gs1.history",
+      "paper": "cse.mains.gs1",
+      "title": "Ancient India",
+      "keywords": [
+        "prehistoric",
+        "harappa",
+        "indus valley",
+        "vedic",
+        "mauryan",
+        "gupta",
+        "buddhism",
+        "jainism",
+        "sangam"
+      ],
+      "description": "Prehistory to early medieval India: Harappan and Vedic cultures, religions, empires and dynasties."
+    },
+    {
+      "id": "cse.gs1.history.medieval",
+      "parent": "cse.gs1.history",
+      "paper": "cse.mains.gs1",
+      "title": "Medieval India",
+      "keywords": [
+        "delhi sultanate",
+        "mughals",
+        "vijayanagara",
+        "bhakti",
+        "sufi",
+        "cholas",
+        "rajputs",
+        "marathas"
+      ],
+      "description": "Early medieval kingdoms, the Delhi Sultanate, Mughals, regional states and Bhakti-Sufi movements."
+    },
+    {
+      "id": "cse.gs1.history.modern",
+      "parent": "cse.gs1.history",
+      "paper": "cse.mains.gs1",
+      "title": "Modern India and the freedom struggle",
+      "keywords": [
+        "british rule",
+        "1857",
+        "congress",
+        "gandhi",
+        "national movement",
+        "freedom struggle",
+        "socio-religious reform"
+      ],
+      "description": "Mid-eighteenth century to 1947: colonial rule, reform movements and the stages of the freedom struggle."
+    },
+    {
+      "id": "cse.gs1.history.postindependence",
+      "parent": "cse.gs1.history",
+      "paper": "cse.mains.gs1",
+      "title": "Post-independence consolidation",
+      "keywords": [
+        "integration of princely states",
+        "linguistic reorganisation",
+        "post-independence",
+        "reorganisation of states"
+      ],
+      "description": "Consolidation and reorganisation within the country after independence."
+    },
+    {
+      "id": "cse.gs1.history.world",
+      "parent": "cse.gs1.history",
+      "paper": "cse.mains.gs1",
+      "title": "World history",
+      "keywords": [
+        "industrial revolution",
+        "world wars",
+        "colonisation",
+        "decolonisation",
+        "communism",
+        "capitalism",
+        "french revolution"
+      ],
+      "description": "Events from the eighteenth century: industrial revolution, world wars, redrawal of boundaries, political philosophies."
+    },
+    {
+      "id": "cse.gs1.society",
+      "parent": "cse.gs1",
+      "paper": "cse.mains.gs1",
+      "title": "Indian society",
+      "keywords": [
+        "diversity",
+        "women",
+        "population",
+        "urbanisation",
+        "globalisation",
+        "communalism",
+        "regionalism",
+        "secularism"
+      ],
+      "description": "Salient features of Indian society, role of women, population, poverty, urbanisation and social empowerment."
+    },
+    {
+      "id": "cse.gs1.geography",
+      "parent": "cse.gs1",
+      "paper": "cse.mains.gs1",
+      "title": "Geography",
+      "keywords": [
+        "geography",
+        "maps",
+        "physical geography",
+        "indian geography",
+        "world geography"
+      ],
+      "description": "Physical, Indian and world geography for Prelims and Mains."
+    },
+    {
+      "id": "cse.gs1.geography.physical",
+      "parent": "cse.gs1.geography",
+      "paper": "cse.mains.gs1",
+      "title": "Physical geography",
+      "keywords": [
+        "geomorphology",
+        "climatology",
+        "oceanography",
+        "earthquakes",
+        "tsunami",
+        "volcanoes",
+        "cyclones"
+      ],
+      "description": "Landforms, climate, oceans and geophysical phenomena, with changes in critical features."
+    },
+    {
+      "id": "cse.gs1.geography.india",
+      "parent": "cse.gs1.geography",
+      "paper": "cse.mains.gs1",
+      "title": "Indian geography",
+      "keywords": [
+        "rivers",
+        "monsoon",
+        "soils",
+        "minerals",
+        "agriculture regions",
+        "industries location",
+        "drainage"
+      ],
+      "description": "Physiography, drainage, climate, resources and location of industries in India."
+    },
+    {
+      "id": "cse.gs1.geography.world",
+      "parent": "cse.gs1.geography",
+      "paper": "cse.mains.gs1",
+      "title": "World geography and resources",
+      "keywords": [
+        "world resources",
+        "continents",
+        "straits",
+        "resource distribution",
+        "world map"
+      ],
+      "description": "Distribution of key natural resources across the world, including South Asia and the Indian subcontinent."
+    },
+    {
+      "id": "cse.gs2",
+      "parent": null,
+      "paper": "cse.mains.gs2",
+      "title": "GS-II: Polity, Governance, Social Justice and IR",
+      "keywords": [
+        "gs2",
+        "general studies 2",
+        "polity",
+        "governance",
+        "international relations"
+      ],
+      "description": "Mains GS Paper II; also covers the polity and governance parts of Prelims GS-I."
+    },
+    {
+      "id": "cse.gs2.polity",
+      "parent": "cse.gs2",
+      "paper": "cse.mains.gs2",
+      "title": "Indian Polity and Constitution",
+      "keywords": [
+        "constitution",
+        "polity",
+        "parliament",
+        "fundamental rights",
+        "judiciary",
+        "federalism",
+        "amendment"
+      ],
+      "description": "Constitution, its evolution and basic structure, Union and State institutions, and constitutional bodies."
+    },
+    {
+      "id": "cse.gs2.governance",
+      "parent": "cse.gs2",
+      "paper": "cse.mains.gs2",
+      "title": "Governance",
+      "keywords": [
+        "governance",
+        "e-governance",
+        "transparency",
+        "accountability",
+        "civil services",
+        "shgs",
+        "ngos"
+      ],
+      "description": "Government policies, transparency and accountability, e-governance, civil services and development actors."
+    },
+    {
+      "id": "cse.gs2.socialjustice",
+      "parent": "cse.gs2",
+      "paper": "cse.mains.gs2",
+      "title": "Social justice",
+      "keywords": [
+        "welfare schemes",
+        "vulnerable sections",
+        "health",
+        "education",
+        "poverty",
+        "hunger"
+      ],
+      "description": "Welfare schemes for vulnerable sections, and issues of health, education and human resources."
+    },
+    {
+      "id": "cse.gs2.ir",
+      "parent": "cse.gs2",
+      "paper": "cse.mains.gs2",
+      "title": "International relations",
+      "keywords": [
+        "foreign policy",
+        "neighbourhood",
+        "bilateral relations",
+        "international institutions",
+        "diaspora",
+        "un"
+      ],
+      "description": "India and its neighbourhood, bilateral and global groupings, and important international institutions."
+    },
+    {
+      "id": "cse.gs3",
+      "parent": null,
+      "paper": "cse.mains.gs3",
+      "title": "GS-III: Economy, Environment, S&T, Security and Disasters",
+      "keywords": [
+        "gs3",
+        "general studies 3",
+        "economy",
+        "environment",
+        "science and technology",
+        "security"
+      ],
+      "description": "Mains GS Paper III; also covers the economy, environment and science parts of Prelims GS-I."
+    },
+    {
+      "id": "cse.gs3.economy",
+      "parent": "cse.gs3",
+      "paper": "cse.mains.gs3",
+      "title": "Indian economy",
+      "keywords": [
+        "economy",
+        "gdp",
+        "inflation",
+        "budget",
+        "banking",
+        "monetary policy",
+        "fiscal policy",
+        "infrastructure"
+      ],
+      "description": "Growth, planning, resource mobilisation, inclusive growth, budgeting, banking and infrastructure."
+    },
+    {
+      "id": "cse.gs3.agriculture",
+      "parent": "cse.gs3",
+      "paper": "cse.mains.gs3",
+      "title": "Agriculture and food",
+      "keywords": [
+        "agriculture",
+        "msp",
+        "irrigation",
+        "food processing",
+        "land reforms",
+        "pds",
+        "subsidies"
+      ],
+      "description": "Cropping patterns, irrigation, farm subsidies and MSP, PDS, food processing and land reforms."
+    },
+    {
+      "id": "cse.gs3.scitech",
+      "parent": "cse.gs3",
+      "paper": "cse.mains.gs3",
+      "title": "Science and technology",
+      "keywords": [
+        "science",
+        "technology",
+        "space",
+        "biotechnology",
+        "it",
+        "nanotechnology",
+        "ipr",
+        "general science"
+      ],
+      "description": "Developments in science and technology, indigenisation, and the General Science part of Prelims."
+    },
+    {
+      "id": "cse.gs3.environment",
+      "parent": "cse.gs3",
+      "paper": "cse.mains.gs3",
+      "title": "Environment and ecology",
+      "keywords": [
+        "environment",
+        "ecology",
+        "biodiversity",
+        "climate change",
+        "pollution",
+        "eia",
+        "conservation"
+      ],
+      "description": "Conservation, pollution, environmental impact assessment, biodiversity and climate change."
+    },
+    {
+      "id": "cse.gs3.security",
+      "parent": "cse.gs3",
+      "paper": "cse.mains.gs3",
+      "title": "Internal security",
+      "keywords": [
+        "internal security",
+        "terrorism",
+        "cyber security",
+        "border management",
+        "money laundering",
+        "security forces"
+      ],
+      "description": "Internal security challenges, cyber security, border management and the security forces."
+    },
+    {
+      "id": "cse.gs3.disaster",
+      "parent": "cse.gs3",
+      "paper": "cse.mains.gs3",
+      "title": "Disaster management",
+      "keywords": [
+        "disaster management",
+        "ndma",
+        "floods",
+        "earthquakes",
+        "cyclones",
+        "sendai"
+      ],
+      "description": "Types of disasters, preparedness, mitigation and the disaster management framework."
+    },
+    {
+      "id": "cse.gs4",
+      "parent": null,
+      "paper": "cse.mains.gs4",
+      "title": "GS-IV: Ethics, Integrity and Aptitude",
+      "keywords": [
+        "gs4",
+        "ethics",
+        "integrity",
+        "aptitude",
+        "case studies"
+      ],
+      "description": "Mains GS Paper IV: ethics theory and case studies."
+    },
+    {
+      "id": "cse.gs4.ethics",
+      "parent": "cse.gs4",
+      "paper": "cse.mains.gs4",
+      "title": "Ethics: concepts and thinkers",
+      "keywords": [
+        "ethics",
+        "values",
+        "attitude",
+        "emotional intelligence",
+        "probity",
+        "thinkers",
+        "integrity"
+      ],
+      "description": "Ethics and human interface, attitude, aptitude for civil service, emotional intelligence, thinkers and probity in governance."
+    },
+    {
+      "id": "cse.gs4.cases",
+      "parent": "cse.gs4",
+      "paper": "cse.mains.gs4",
+      "title": "Ethics case studies",
+      "keywords": [
+        "case study",
+        "dilemma",
+        "stakeholders",
+        "options",
+        "conflict of interest"
+      ],
+      "description": "Case studies on the topics of the GS-IV syllabus."
+    },
+    {
+      "id": "cse.essay",
+      "parent": null,
+      "paper": "cse.mains.essay",
+      "title": "Essay",
+      "keywords": [
+        "essay",
+        "philosophical essay",
+        "themes",
+        "quotes",
+        "outline"
+      ],
+      "description": "Mains Essay paper: two essays, one from each section."
+    },
+    {
+      "id": "cse.csat",
+      "parent": null,
+      "paper": "cse.pre.csat",
+      "title": "CSAT (Prelims Paper II)",
+      "keywords": [
+        "csat",
+        "aptitude",
+        "qualifying",
+        "paper 2"
+      ],
+      "description": "Prelims General Studies Paper II, qualifying at 33%."
+    },
+    {
+      "id": "cse.csat.comprehension",
+      "parent": "cse.csat",
+      "paper": "cse.pre.csat",
+      "title": "Comprehension",
+      "keywords": [
+        "reading comprehension",
+        "passages",
+        "inference",
+        "assumption"
+      ],
+      "description": "Reading comprehension passages and inference questions."
+    },
+    {
+      "id": "cse.csat.reasoning",
+      "parent": "cse.csat",
+      "paper": "cse.pre.csat",
+      "title": "Logical reasoning and analytical ability",
+      "keywords": [
+        "logical reasoning",
+        "syllogism",
+        "statements",
+        "analytical ability",
+        "puzzles"
+      ],
+      "description": "Logical reasoning and analytical ability."
+    },
+    {
+      "id": "cse.csat.mental",
+      "parent": "cse.csat",
+      "paper": "cse.pre.csat",
+      "title": "General mental ability",
+      "keywords": [
+        "mental ability",
+        "series",
+        "coding",
+        "directions",
+        "seating arrangement",
+        "blood relations"
+      ],
+      "description": "General mental ability."
+    },
+    {
+      "id": "cse.csat.numeracy",
+      "parent": "cse.csat",
+      "paper": "cse.pre.csat",
+      "title": "Basic numeracy and data interpretation",
+      "keywords": [
+        "numeracy",
+        "percentages",
+        "ratio",
+        "averages",
+        "data interpretation",
+        "charts",
+        "tables"
+      ],
+      "description": "Basic numeracy (numbers and their relations, orders of magnitude) and data interpretation at Class X level."
+    },
+    {
+      "id": "cse.csat.decision",
+      "parent": "cse.csat",
+      "paper": "cse.pre.csat",
+      "title": "Decision making and interpersonal skills",
+      "keywords": [
+        "decision making",
+        "problem solving",
+        "interpersonal skills",
+        "communication"
+      ],
+      "description": "Decision making, problem solving, and interpersonal and communication skills."
+    },
+    {
+      "id": "cse.opt1",
+      "parent": null,
+      "paper": "cse.mains.opt1",
+      "title": "Optional: Anthropology Paper I",
+      "keywords": [
+        "anthropology",
+        "paper 1",
+        "optional",
+        "physical anthropology",
+        "social anthropology"
+      ],
+      "description": "Anthropology Paper I: foundations, biological anthropology, prehistory and socio-cultural anthropology."
+    },
+    {
+      "id": "cse.opt1.foundations",
+      "parent": "cse.opt1",
+      "paper": "cse.mains.opt1",
+      "title": "Meaning, scope and branches of anthropology",
+      "keywords": [
+        "scope of anthropology",
+        "branches",
+        "social-cultural",
+        "biological",
+        "archaeological",
+        "linguistic",
+        "relationship with other disciplines"
+      ],
+      "description": "Meaning, scope and development of anthropology; its relationship with other disciplines; and its main branches."
+    },
+    {
+      "id": "cse.opt1.evolution",
+      "parent": "cse.opt1",
+      "paper": "cse.mains.opt1",
+      "title": "Human evolution and theories of evolution",
+      "keywords": [
+        "human evolution",
+        "darwinism",
+        "lamarck",
+        "synthetic theory",
+        "adaptive radiation",
+        "mosaic evolution",
+        "doll's rule"
+      ],
+      "description": "Biological and cultural factors in human evolution; pre-Darwinian, Darwinian and post-Darwinian theories; terms of evolutionary biology."
+    },
+    {
+      "id": "cse.opt1.primates",
+      "parent": "cse.opt1",
+      "paper": "cse.mains.opt1",
+      "title": "Primates",
+      "keywords": [
+        "primates",
+        "primate taxonomy",
+        "primate behaviour",
+        "erect posture",
+        "bipedalism",
+        "comparative anatomy"
+      ],
+      "description": "Characteristics of primates, evolutionary trends and taxonomy, primate adaptations and behaviour."
+    },
+    {
+      "id": "cse.opt1.fossils",
+      "parent": "cse.opt1",
+      "paper": "cse.mains.opt1",
+      "title": "Fossil hominids",
+      "keywords": [
+        "australopithecines",
+        "homo erectus",
+        "neanderthal",
+        "homo sapiens",
+        "rhodesian man",
+        "fossil evidence"
+      ],
+      "description": "Phylogenetic status, characteristics and distribution of Plio-Pleistocene hominids, Homo erectus, Neanderthals and Homo sapiens."
+    },
+    {
+      "id": "cse.opt1.biobasis",
+      "parent": "cse.opt1",
+      "paper": "cse.mains.opt1",
+      "title": "Biological basis of life",
+      "keywords": [
+        "cell",
+        "dna",
+        "replication",
+        "protein synthesis",
+        "gene",
+        "mutation",
+        "chromosomes",
+        "cell division"
+      ],
+      "description": "The cell, DNA structure and replication, protein synthesis, gene, mutation, chromosomes and cell division."
+    },
+    {
+      "id": "cse.opt1.prehistory",
+      "parent": "cse.opt1",
+      "paper": "cse.mains.opt1",
+      "title": "Prehistoric archaeology",
+      "keywords": [
+        "dating methods",
+        "palaeolithic",
+        "mesolithic",
+        "neolithic",
+        "chalcolithic",
+        "bronze age",
+        "iron age"
+      ],
+      "description": "Principles of prehistoric archaeology, relative and absolute dating, and the broad outline of prehistoric cultures."
+    },
+    {
+      "id": "cse.opt1.culture-society",
+      "parent": "cse.opt1",
+      "paper": "cse.mains.opt1",
+      "title": "Nature of culture and society",
+      "keywords": [
+        "culture",
+        "civilisation",
+        "cultural relativism",
+        "ethnocentrism",
+        "society",
+        "social stratification",
+        "status and role"
+      ],
+      "description": "The concept and characteristics of culture and society, and related concepts."
+    },
+    {
+      "id": "cse.opt1.marriage-family-kinship",
+      "parent": "cse.opt1",
+      "paper": "cse.mains.opt1",
+      "title": "Marriage, family and kinship",
+      "keywords": [
+        "marriage",
+        "incest taboo",
+        "family",
+        "kinship",
+        "descent",
+        "residence",
+        "alliance"
+      ],
+      "description": "Definitions, forms and functions of marriage and family, and kinship terminology, descent and alliance."
+    },
+    {
+      "id": "cse.opt1.economic",
+      "parent": "cse.opt1",
+      "paper": "cse.mains.opt1",
+      "title": "Economic organisation",
+      "keywords": [
+        "economic anthropology",
+        "reciprocity",
+        "redistribution",
+        "exchange",
+        "formalism",
+        "substantivism"
+      ],
+      "description": "Meaning, scope and relevance of economic anthropology; production, distribution and exchange in tribal and peasant societies."
+    },
+    {
+      "id": "cse.opt1.political",
+      "parent": "cse.opt1",
+      "paper": "cse.mains.opt1",
+      "title": "Political organisation and social control",
+      "keywords": [
+        "band",
+        "tribe",
+        "chiefdom",
+        "state",
+        "power",
+        "authority",
+        "social control",
+        "law and justice"
+      ],
+      "description": "Band, tribe, chiefdom, kingdom and state; power and authority; social control, law and justice in simple societies."
+    },
+    {
+      "id": "cse.opt1.religion",
+      "parent": "cse.opt1",
+      "paper": "cse.mains.opt1",
+      "title": "Religion",
+      "keywords": [
+        "animism",
+        "animatism",
+        "totemism",
+        "magic",
+        "religion",
+        "shaman",
+        "priest",
+        "witchcraft"
+      ],
+      "description": "Anthropological approaches to religion; magic, religion and science; specialists and witchcraft."
+    },
+    {
+      "id": "cse.opt1.theories",
+      "parent": "cse.opt1",
+      "paper": "cse.mains.opt1",
+      "title": "Anthropological theories",
+      "keywords": [
+        "evolutionism",
+        "diffusionism",
+        "functionalism",
+        "structuralism",
+        "culture and personality",
+        "neo-evolutionism",
+        "postmodernism"
+      ],
+      "description": "Classical and later theories from evolutionism and diffusionism to functionalism, structuralism and postmodernism."
+    },
+    {
+      "id": "cse.opt1.language",
+      "parent": "cse.opt1",
+      "paper": "cse.mains.opt1",
+      "title": "Culture, language and communication",
+      "keywords": [
+        "language",
+        "communication",
+        "non-verbal",
+        "linguistic anthropology",
+        "social context of language"
+      ],
+      "description": "Nature, origin and characteristics of language; verbal and non-verbal communication; language in social context."
+    },
+    {
+      "id": "cse.opt1.methods",
+      "parent": "cse.opt1",
+      "paper": "cse.mains.opt1",
+      "title": "Research methods in anthropology",
+      "keywords": [
+        "fieldwork",
+        "participant observation",
+        "interview",
+        "case study",
+        "genealogy",
+        "life history",
+        "tools of data collection"
+      ],
+      "description": "Fieldwork tradition, techniques, methods and methodology of data collection and analysis."
+    },
+    {
+      "id": "cse.opt1.genetics",
+      "parent": "cse.opt1",
+      "paper": "cse.mains.opt1",
+      "title": "Human genetics",
+      "keywords": [
+        "human genetics",
+        "mendelian genetics",
+        "twin study",
+        "pedigree",
+        "hardy-weinberg",
+        "chromosomal aberrations",
+        "dna technology"
+      ],
+      "description": "Methods and applications of human genetics, Mendelian and population genetics, and chromosomal aberrations."
+    },
+    {
+      "id": "cse.opt1.race",
+      "parent": "cse.opt1",
+      "paper": "cse.mains.opt1",
+      "title": "Race, racism and genetic markers",
+      "keywords": [
+        "race",
+        "racism",
+        "racial classification",
+        "genetic markers",
+        "blood groups",
+        "population variation"
+      ],
+      "description": "Race and racism, biological basis of variation, and age, sex and population variation as genetic markers."
+    },
+    {
+      "id": "cse.opt1.ecological",
+      "parent": "cse.opt1",
+      "paper": "cse.mains.opt1",
+      "title": "Ecological and epidemiological anthropology",
+      "keywords": [
+        "ecological anthropology",
+        "adaptation",
+        "acclimatisation",
+        "epidemiology",
+        "infectious disease",
+        "nutrition"
+      ],
+      "description": "Biological adaptation and acclimatisation, and the epidemiology of infectious and non-infectious diseases."
+    },
+    {
+      "id": "cse.opt1.growth",
+      "parent": "cse.opt1",
+      "paper": "cse.mains.opt1",
+      "title": "Human growth and development",
+      "keywords": [
+        "growth",
+        "development",
+        "stages of growth",
+        "somatotypes",
+        "anthropometry",
+        "ageing"
+      ],
+      "description": "Concept, stages and factors of human growth and development, and methods of studying them."
+    },
+    {
+      "id": "cse.opt1.demography",
+      "parent": "cse.opt1",
+      "paper": "cse.mains.opt1",
+      "title": "Fertility and demographic anthropology",
+      "keywords": [
+        "menarche",
+        "menopause",
+        "fertility",
+        "fecundity",
+        "mortality",
+        "demographic theories"
+      ],
+      "description": "Bio-events and fertility, demographic theories, and factors influencing fecundity, fertility, natality and mortality."
+    },
+    {
+      "id": "cse.opt1.applied",
+      "parent": "cse.opt1",
+      "paper": "cse.mains.opt1",
+      "title": "Applications of anthropology",
+      "keywords": [
+        "applied anthropology",
+        "forensic anthropology",
+        "sports anthropology",
+        "nutritional anthropology",
+        "dna fingerprinting",
+        "designing"
+      ],
+      "description": "Anthropology of sports, nutrition, defence and designing, forensic anthropology, and applied human genetics."
+    },
+    {
+      "id": "cse.opt2",
+      "parent": null,
+      "paper": "cse.mains.opt2",
+      "title": "Optional: Anthropology Paper II",
+      "keywords": [
+        "anthropology",
+        "paper 2",
+        "indian anthropology",
+        "tribal india"
+      ],
+      "description": "Anthropology Paper II: Indian culture and society, tribes, and anthropology in India."
+    },
+    {
+      "id": "cse.opt2.civilisation",
+      "parent": "cse.opt2",
+      "paper": "cse.mains.opt2",
+      "title": "Evolution of Indian culture and civilisation",
+      "keywords": [
+        "indian prehistory",
+        "indus civilisation",
+        "siwaliks",
+        "narmada",
+        "ethno-archaeology",
+        "palaeo-anthropology"
+      ],
+      "description": "Prehistoric and protohistoric India, palaeo-anthropological evidence from India, and ethno-archaeology."
+    },
+    {
+      "id": "cse.opt2.demography",
+      "parent": "cse.opt2",
+      "paper": "cse.mains.opt2",
+      "title": "Demographic profile of India",
+      "keywords": [
+        "ethnic elements",
+        "linguistic elements",
+        "indian population",
+        "population growth",
+        "distribution"
+      ],
+      "description": "Ethnic and linguistic elements in the Indian population, its distribution and factors of growth."
+    },
+    {
+      "id": "cse.opt2.social-system",
+      "parent": "cse.opt2",
+      "paper": "cse.mains.opt2",
+      "title": "Traditional Indian social system and caste",
+      "keywords": [
+        "varnashrama",
+        "purushartha",
+        "karma",
+        "caste system",
+        "jajmani",
+        "dominant caste",
+        "caste mobility"
+      ],
+      "description": "Structure of the traditional Indian social system, and theories, features and change in the caste system."
+    },
+    {
+      "id": "cse.opt2.religion",
+      "parent": "cse.opt2",
+      "paper": "cse.mains.opt2",
+      "title": "Sacred complex and religions in Indian society",
+      "keywords": [
+        "sacred complex",
+        "nature-man-spirit complex",
+        "buddhism",
+        "jainism",
+        "islam",
+        "christianity"
+      ],
+      "description": "The sacred complex and nature-man-spirit complex, and the impact of religions on Indian society."
+    },
+    {
+      "id": "cse.opt2.indian-anthropology",
+      "parent": "cse.opt2",
+      "paper": "cse.mains.opt2",
+      "title": "Anthropology in India",
+      "keywords": [
+        "growth of anthropology in india",
+        "indian anthropologists",
+        "tribal and caste studies",
+        "village studies"
+      ],
+      "description": "Emergence and growth of anthropology in India and contributions of Indian anthropologists."
+    },
+    {
+      "id": "cse.opt2.village-change",
+      "parent": "cse.opt2",
+      "paper": "cse.mains.opt2",
+      "title": "Indian village, minorities and social change",
+      "keywords": [
+        "indian village",
+        "village studies",
+        "minorities",
+        "sanskritisation",
+        "westernisation",
+        "modernisation"
+      ],
+      "description": "The Indian village, linguistic and religious minorities, and processes of socio-cultural change."
+    },
+    {
+      "id": "cse.opt2.tribal-situation",
+      "parent": "cse.opt2",
+      "paper": "cse.mains.opt2",
+      "title": "Tribal situation and problems",
+      "keywords": [
+        "tribes of india",
+        "pvtg",
+        "land alienation",
+        "displacement",
+        "forest policy",
+        "tribal problems"
+      ],
+      "description": "Tribal situation in India, problems of tribal communities, and the impact of development projects and displacement."
+    },
+    {
+      "id": "cse.opt2.sc-st-obc",
+      "parent": "cse.opt2",
+      "paper": "cse.mains.opt2",
+      "title": "SC, ST and OBC: deprivation, safeguards and ethnicity",
+      "keywords": [
+        "scheduled castes",
+        "scheduled tribes",
+        "obc",
+        "constitutional safeguards",
+        "ethnicity",
+        "ethnic conflicts"
+      ],
+      "description": "Exploitation and deprivation of SC, ST and OBC, constitutional safeguards, social change and ethnicity."
+    },
+    {
+      "id": "cse.opt2.tribe-nation",
+      "parent": "cse.opt2",
+      "paper": "cse.mains.opt2",
+      "title": "Religions, tribes and the nation state",
+      "keywords": [
+        "impact of religions on tribes",
+        "tribe and nation state",
+        "tribal identity"
+      ],
+      "description": "Impact of religions on tribal societies, and the tribe in relation to the nation state."
+    },
+    {
+      "id": "cse.opt2.tribal-administration",
+      "parent": "cse.opt2",
+      "paper": "cse.mains.opt2",
+      "title": "Tribal administration and development",
+      "keywords": [
+        "tribal policy",
+        "fifth schedule",
+        "sixth schedule",
+        "pesa",
+        "tribal sub-plan",
+        "role of anthropology"
+      ],
+      "description": "History of tribal administration and policies, development programmes, and the role of anthropology in development."
+    }
+  ]
+}
