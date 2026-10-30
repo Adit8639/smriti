@@ -35,10 +35,18 @@ export async function ingestPdf({ name, bytes }, { mode = 'pdf', title = null, o
   const texts = [];
   const thumbs = mode === 'text' ? [] : null;
   for (let p = 1; p <= n; p++) {
-    const page = await doc.getPage(p);
-    texts.push(await pageText(page));
-    if (thumbs) thumbs.push(await thumb(page));
-    page.cleanup();
+    // One unreadable page (odd fonts, broken objects) must not sink the whole book.
+    let page = null;
+    try {
+      page = await doc.getPage(p);
+      texts.push(await pageText(page));
+    } catch (e) {
+      texts.push('');
+    }
+    if (thumbs) {
+      try { thumbs.push(page ? await thumb(page) : null); } catch (e) { thumbs.push(null); }
+    }
+    if (page) page.cleanup();
     onProgress(p, n);
     if (p % 4 === 0) await nextTick();
   }

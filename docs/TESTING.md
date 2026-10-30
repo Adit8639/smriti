@@ -9,10 +9,11 @@ Use one of these:
 - **A. GitHub Pages from this branch.** This needs Claude's GitHub access fixed first (see the chat), so the branch can be pushed.
   1. Open https://github.com/Adit8639/smriti → **Settings → Pages**.
   2. Set Source to **Deploy from a branch**, Branch to `claude/confident-pasteur-w6nw94`, folder `/ (root)`, then **Save**.
-- **B. Upload the zip.**
+- **B. Upload the zip.** GitHub's uploader takes at most 100 files per upload, so this takes two.
   1. Unzip `smriti.zip`.
-  2. On github.com/Adit8639/smriti, click **Add file → Upload files** and drag in everything inside the unzipped folder.
-  3. Commit to `main`, then set Pages to `main` and `/ (root)`.
+  2. On github.com/Adit8639/smriti, click **Add file → Upload files**, drag in the **`vendor`** folder from inside the unzipped folder, and **Commit**.
+  3. Click **Add file → Upload files** again, drag in **everything else** inside the unzipped folder (all files and folders except `vendor`), and **Commit**.
+  4. Set Pages to `main` and `/ (root)`.
 
 After 1–3 minutes the app is at **https://adit8639.github.io/smriti/**. If you already installed the Phase 1 version, a **Reload to update** banner appears. Tap it.
 

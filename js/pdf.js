@@ -1,6 +1,7 @@
 // Lazy loader for the vendored pdf.js. Parsing and text extraction run in pdf.js's own
-// worker; fonts, CMaps and image decoders come from /vendor/pdfjs, so everything works
-// offline once cached.
+// worker; standard fonts and image decoders come from /vendor/pdfjs, so everything works
+// offline once cached. The CJK character maps are not shipped: English and Hindi PDFs
+// carry their own text maps, and a page that cannot be read just has no text.
 
 let lib = null;
 const BASE = new URL('../vendor/pdfjs/', import.meta.url).href;
@@ -18,8 +19,6 @@ export async function openPdf(data) {
   const p = await pdfjs();
   return p.getDocument({
     data,
-    cMapUrl: `${BASE}cmaps/`,
-    cMapPacked: true,
     standardFontDataUrl: `${BASE}standard_fonts/`,
     wasmUrl: `${BASE}wasm/`,
     iccUrl: `${BASE}iccs/`,

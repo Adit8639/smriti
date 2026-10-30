@@ -134,7 +134,7 @@ self.addEventListener('fetch', (event) => {
     if (hit) return hit;
     try {
       const res = await fetch(req);
-      // pdf.js character maps are fetched only when a PDF needs one; keep them for offline use.
+      // Anything else pdf.js asks for under /vendor/pdfjs/ is kept for offline use.
       if (res.ok && url.pathname.includes('/vendor/pdfjs/')) cache.put(req, res.clone());
       return res;
     } catch (err) {
