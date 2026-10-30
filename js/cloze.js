@@ -78,7 +78,7 @@ export function clozeTargets(text) {
   for (const m of s.matchAll(/\b(?:Article|Art\.|Articles)\s+(\d{1,3}[A-Z]{0,2}(?:\(\d+\))?)/g)) add(m[1], 'article');
   for (const m of s.matchAll(/\b(?:Schedule|Part)\s+([IVXL]+[A-Z]?|\d{1,2})\b/g)) add(m[1], 'schedule');
   for (const m of s.matchAll(/\b(1[0-9]{3}|20[0-9]{2})\b/g)) add(m[1], 'year');
-  for (const m of s.matchAll(/(₹\s?[\d,.]+\s*(?:crore|lakh|million|billion)?|\b\d[\d,.]*\s?(?:%|per cent|crore|lakh|km|million|billion|hectares?))/gi)) add(m[1], 'number');
+  for (const m of s.matchAll(/(₹\s?[\d,.]+(?:\s*(?:lakh|crore|million|billion|trillion))*|\b\d[\d,.]*\s?(?:%|per cent|km|hectares?|(?:lakh|crore|million|billion|trillion)(?:\s+(?:lakh|crore|million|billion|trillion))*))/gi)) add(m[1].replace(/[.,]+$/, ''), 'number');
   for (const m of s.matchAll(/\b([A-Z][a-z]+(?:[\s-]+(?:of|the|and|for|on)?\s*[A-Z][a-zA-Z]+)+)\b/g)) {
     const words = m[1].split(/\s+/);
     if (words.length === 1 && SENTENCE_START.has(words[0])) continue;
@@ -98,3 +98,29 @@ export function makeCloze(text, target) {
 
 // Atom text with its gap filled, for checklists and reading views.
 export const filled = (atom) => (/_{3,}/.test(atom.text) ? atom.text.replace(/_{3,}/, String(atom.answer)) : `${atom.text} — ${atom.answer}`);
+
+// Rejoins a PDF page's text into paragraphs: PDF text breaks at every printed line, which
+// reads badly on a narrow screen. Short lines (headings) and bullets keep their own line.
+export function reflow(text) {
+  const paras = [];
+  let cur = '';
+  let prevLen = 0;
+  for (const raw of String(text || '').split('\n')) {
+    const line = raw.trim();
+    if (!line) { if (cur) paras.push(cur); cur = ''; continue; }
+    if (!cur) { cur = line; prevLen = line.length; continue; }
+    const bullet = /^([•▪●◦*\-–]|\(?[0-9ivx]{1,4}[.)])\s/i.test(line);
+    const ended = /[.!?:;"”)]$/.test(cur);
+    const lower = /^[a-z(,]/.test(line);
+    const join = !bullet && (lower || (!ended && prevLen >= 40));
+    prevLen = line.length;
+    if (join) {
+      cur = /[a-z]-$/.test(cur) && lower ? cur.slice(0, -1) + line : `${cur} ${line}`;
+    } else {
+      paras.push(cur);
+      cur = line;
+    }
+  }
+  if (cur) paras.push(cur);
+  return paras;
+}

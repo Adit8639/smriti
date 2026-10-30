@@ -75,6 +75,23 @@ export async function render(route) {
     }), 0);
     return host;
   }
+  if (arg === 'atoms') {
+    // Chosen atoms: reviewed for real (FSRS), or as practice with ?mode=practice.
+    setTimeout(() => run(host, async () => {
+      const ids = (route.query.get('ids') || '').split(',').map((x) => decodeURIComponent(x)).filter(Boolean);
+      const mode = route.query.get('mode') === 'practice' ? 'practice' : 'review';
+      const atoms = (await Promise.all(ids.map((id) => app.db.get('atoms', id)))).filter((a) => {
+        if (!a) return false;
+        const q = quarantineStatus(a, app.state);
+        const rec = app.state.atoms[a.id];
+        return (q === 'clear' || q === 'approved') && !(rec && (rec.retired || rec.suspended));
+      });
+      if (!atoms.length) { document.body.classList.remove('focus'); clear(host).append(frame(h('div', { class: 'card' }, h('p', { text: 'None of these atoms can be reviewed right now (not installed, in Quarantine, or suspended).' }), h('a', { class: 'btn', href: '#/today' }, 'Back to Today')))); return null; }
+      const items = atoms.map((a) => ({ type: 'atom', atomId: a.id, kind: mode === 'practice' ? 'practice' : 'due', node: (a.nodes || [''])[0] }));
+      return new Session({ host, mode, items, title: mode === 'practice' ? 'Practice' : 'Review these', onEnd: (sum) => doneScreen(host, sum, { title: 'Done' }) });
+    }), 0);
+    return host;
+  }
   if (arg === 'traps') {
     // Trap drill: statements built on the chosen trap tags, mixed with true statements.
     setTimeout(() => run(host, async () => {

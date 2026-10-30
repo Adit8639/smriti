@@ -163,7 +163,8 @@ async function linkFlow(sourceId) {
 }
 
 export async function render() {
-  const local = new Map((await app.db.getAll('sources')).map((r) => [r.id, r]));
+  // The sources store also keeps answer photos (img-…); they are not sources.
+  const local = new Map((await app.db.getAll('sources')).filter((r) => r.kind !== 'photo').map((r) => [r.id, r]));
   const st = app.state;
   const nodes = allNodes();
   const root = h('div', { class: 'sources' });

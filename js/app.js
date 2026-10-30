@@ -25,6 +25,9 @@ import * as mock from './view-mock.js';
 import * as csat from './view-csat.js';
 import * as progress from './view-progress.js';
 import * as more from './view-more.js';
+import * as mains from './view-mains.js';
+import * as caView from './view-ca.js';
+import * as intake from './view-intake.js';
 
 const ROUTES = {
   today: { view: today, title: 'Today', nav: 'today' },
@@ -42,6 +45,10 @@ const ROUTES = {
   lab: { view: lab, title: 'Prelims Lab', nav: 'labs' },
   mock: { view: mock, title: 'Mock', nav: 'labs' },
   csat: { view: csat, title: 'CSAT Gym', nav: 'labs' },
+  mains: { view: mains, title: 'Mains Studio', nav: 'labs' },
+  ca: { view: caView, title: 'CA–Static Bridge', nav: 'labs' },
+  intake: { view: intake, title: 'Intake', nav: 'labs' },
+  triage: { view: intake, title: 'Triage', nav: 'labs' },
   progress: { view: progress, title: 'Progress', nav: 'progress' },
   more: { view: more, title: 'More', nav: 'more' },
   sources: { view: sources, title: 'Sources', nav: 'more' },

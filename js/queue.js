@@ -46,9 +46,19 @@ export function reviewCapFor(minutes, setting) {
   return Math.max(50, Math.min(400, Math.round((200 * m) / 180)));
 }
 
-export function isArchived(atom, dayStart) {
-  if (!atom.eventDate || !atom.shelfLifeDays) return false;
-  return dayStart > localMs(atom.eventDate) + atom.shelfLifeDays * DAY;
+// Current-affairs facts count for Prelims until their event date + shelf life, then archive
+// (they stay searchable). The shelf life is the atom's own, else its CA item's, else 540 days.
+export const DEFAULT_SHELF_DAYS = 540;
+export function shelfLife(atom, caShelf) {
+  return atom.shelfLifeDays || (caShelf && caShelf.get(atom.id)) || DEFAULT_SHELF_DAYS;
+}
+export function archiveDay(atom, caShelf) {
+  if (!atom.eventDate || !/^\d{4}-\d{2}-\d{2}$/.test(atom.eventDate)) return null;
+  return localMs(atom.eventDate) + shelfLife(atom, caShelf) * DAY;
+}
+export function isArchived(atom, dayStart, caShelf = null) {
+  const end = archiveDay(atom, caShelf);
+  return end !== null && dayStart > end;
 }
 
 // First index whose topic does not extend a run of 3 from one topic.
@@ -88,7 +98,7 @@ export function interleave(reviews, news) {
 
 // atoms: every atom (packs and self-made). state: rebuilt state. now/dayStart/dayEnd: ms.
 // limits: {newPerDay, reviewCap}. nodeOrder: Map nodeId -> tree position.
-export function buildQueue({ atoms, state, now, dayStart, dayEnd, profile, limits, nodeOrder }) {
+export function buildQueue({ atoms, state, now, dayStart, dayEnd, profile, limits, nodeOrder, caShelf = null }) {
   const anchor = examAnchor(profile, dayStart);
   const forced = [];
   const learning = [];
@@ -111,7 +121,7 @@ export function buildQueue({ atoms, state, now, dayStart, dayEnd, profile, limit
     if (rec && rec.pendingCause) pending.push({ atomId: atom.id, reviewId: rec.pendingCause });
     if (rec && rec.retired) continue;
     if (rec && rec.suspended) { leeches.push(atom.id); continue; }
-    if (isArchived(atom, dayStart)) { archived++; continue; }
+    if (isArchived(atom, dayStart, caShelf)) { archived++; continue; }
     if (anchor && anchor.pauseMains && isMainsOnly(atom)) { mainsPaused++; continue; }
     const node = (atom.nodes && atom.nodes[0]) || '';
     const card = rec && rec.card;

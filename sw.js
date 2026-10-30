@@ -1,7 +1,7 @@
 // SMRITI service worker: versioned, cache-first app shell. Bump VERSION on every release
 // (it must equal APP_VERSION in js/version.js); the page then shows "Reload to update".
 
-const VERSION = '1.4.0';
+const VERSION = '1.5.0';
 const CACHE = `smriti-shell-${VERSION}`;
 
 /* ASSETS:START */
@@ -27,11 +27,17 @@ const ASSETS = [
   './js/db.js',
   './js/derived.js',
   './js/dictate.js',
+  './js/embed-worker.js',
+  './js/embed.js',
   './js/events.js',
   './js/fsrs.js',
+  './js/intake.js',
   './js/integrity.js',
   './js/labdata.js',
   './js/links.js',
+  './js/mains-flows.js',
+  './js/mains-ui.js',
+  './js/mains.js',
   './js/mockgen.js',
   './js/packs.js',
   './js/pdf.js',
@@ -56,13 +62,16 @@ const ASSETS = [
   './js/util.js',
   './js/version.js',
   './js/view-booklet.js',
+  './js/view-ca.js',
   './js/view-csat.js',
   './js/view-data.js',
+  './js/view-intake.js',
   './js/view-lab.js',
   './js/view-labs.js',
   './js/view-learn.js',
   './js/view-leech.js',
   './js/view-library.js',
+  './js/view-mains.js',
   './js/view-mock.js',
   './js/view-more.js',
   './js/view-notes.js',
@@ -136,11 +145,27 @@ self.addEventListener('message', (event) => {
   else if (msg.type === 'GET_VERSION' && event.ports[0]) event.ports[0].postMessage({ version: VERSION });
 });
 
+// Large files loaded only on first use (the topic-matching model and its runtime) live in
+// a cache that outlasts app updates, so they are downloaded once.
+const LAZY = 'smriti-lazy-v1';
+const isLazy = (path) => path.includes('/vendor/ort/') || path.includes('/vendor/minilm/');
+
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
+  if (isLazy(url.pathname)) {
+    event.respondWith((async () => {
+      const lazy = await caches.open(LAZY);
+      const hit = await lazy.match(req, { ignoreSearch: true });
+      if (hit) return hit;
+      const res = await fetch(req);
+      if (res.ok) await lazy.put(req, res.clone());
+      return res;
+    })());
+    return;
+  }
   event.respondWith((async () => {
     const cache = await caches.open(CACHE);
     const hit = await cache.match(req, { ignoreSearch: true });

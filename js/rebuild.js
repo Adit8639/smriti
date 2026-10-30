@@ -47,7 +47,31 @@ export function initialState() {
     pyqStats: {},        // pyqId -> {n, right, lastTs, lastOk, pendingCause?}
     mocks: {},           // mockId -> {title, source, paper, n, key[], fmt[], subj[], status, result…}
     csat: { byType: {}, recent: [] }, // CSAT Gym answers
+    mains: { attempts: {}, counts: {}, byNode: {}, drill: { n: 0, right: 0 }, lastTs: null },
+    caAnchors: {},       // caId -> {nodeId: true} anchors added on a device
+    caMonths: {},        // 'YYYY-MM' -> {done, ts}
+    intake: {},          // batchId -> {kept, discarded, edited, revealed, lastTs}
   };
+}
+
+const MAINS_KINDS = { 'mains.sprint': 'sprint', 'mains.answer': 'answer', 'mains.shadow': 'shadow', 'mains.case': 'case', 'mains.essay': 'essay', 'mains.precis': 'precis', 'mains.counter': 'counter' };
+
+function onMains(s, e, p) {
+  const kind = MAINS_KINDS[e.type];
+  if (!str(p.attemptId) || s.mains.attempts[p.attemptId]) return;
+  const q = isObj(p.q) ? p.q : {};
+  const nodes = Array.isArray(q.nodes) ? q.nodes.filter(str).slice(0, 3) : [];
+  const title = String(q.text || p.theme || p.claim || p.passage || '').slice(0, 140);
+  const rec = { kind, ts: e.ts, eventId: e.id, ref: q.ref || p.ref || null, title, nodes };
+  if (kind === 'answer') { rec.total = Number(p.total) || 0; rec.max = 12; rec.marks = Number(p.marks) || null; }
+  if (kind === 'shadow') { rec.score = Number.isFinite(p.score) ? p.score : null; rec.answerId = p.answerId || null; }
+  if (kind === 'sprint') rec.headings = Array.isArray(p.headings) ? p.headings.filter((x) => isObj(x) && str(x.h)).length : 0;
+  if (kind === 'precis') rec.ok = !!p.ok;
+  s.mains.attempts[p.attemptId] = rec;
+  s.mains.counts[kind] = (s.mains.counts[kind] || 0) + 1;
+  for (const n of nodes) s.mains.byNode[n] = (s.mains.byNode[n] || 0) + 1;
+  s.mains.lastTs = e.ts;
+  if (str(p.sessionId)) sessionTouch(s, p, e.ts, p.ms, false, false);
 }
 
 export const OBJECTIVE_KEEP = 1000;
@@ -312,8 +336,9 @@ export function applyInPlace(s, e) {
       }
       break;
     case 'atom.created':
-      if (isObj(p.atom) && str(p.atom.id) && p.atom.id.startsWith('self.') && str(p.atom.text) && Array.isArray(p.atom.nodes)) {
-        s.self[p.atom.id] = { ...p.atom, origin: 'self', verify: false, createdTs: ts };
+      // Atoms made on a device: "self." (quick add, Reader, splits) or "rule." (PDF intake).
+      if (isObj(p.atom) && str(p.atom.id) && /^(self|rule)\./.test(p.atom.id) && str(p.atom.text) && Array.isArray(p.atom.nodes)) {
+        s.self[p.atom.id] = { ...p.atom, origin: p.atom.id.startsWith('rule.') ? 'rule' : 'self', verify: false, createdTs: ts };
         atomRec(s, p.atom.id).forcedDue = ts;
       }
       break;
@@ -363,6 +388,37 @@ export function applyInPlace(s, e) {
       break;
     case 'csat.answered':
       onCsat(s, e, p);
+      break;
+    case 'mains.sprint':
+    case 'mains.answer':
+    case 'mains.shadow':
+    case 'mains.case':
+    case 'mains.essay':
+    case 'mains.precis':
+    case 'mains.counter':
+      onMains(s, e, p);
+      break;
+    case 'mains.drill':
+      s.mains.drill.n++;
+      if (p.correct) s.mains.drill.right++;
+      break;
+    case 'ca.anchored':
+      if (str(p.caId) && str(p.nodeId)) {
+        const a = s.caAnchors[p.caId] || (s.caAnchors[p.caId] = {});
+        if (p.remove) delete a[p.nodeId]; else a[p.nodeId] = true;
+      }
+      break;
+    case 'ca.monthDone':
+      if (str(p.month) && /^\d{4}-\d{2}$/.test(p.month)) s.caMonths[p.month] = { done: p.done !== false, ts };
+      break;
+    case 'intake.triaged':
+      if (str(p.batchId) && ['keep', 'discard', 'edit'].includes(p.action)) {
+        const b = s.intake[p.batchId] || (s.intake[p.batchId] = { kept: 0, discarded: 0, edited: 0, revealed: 0, lastTs: null, sourceId: p.sourceId || null });
+        if (p.action === 'keep') b.kept++; else if (p.action === 'discard') b.discarded++; else b.edited++;
+        if (p.revealed) b.revealed++;
+        b.lastTs = ts;
+        sessionTouch(s, p, ts, p.ms, false, false);
+      }
       break;
     case 'contrast.done': {
       const c = str(p.pair) ? s.confusions[p.pair] : null;

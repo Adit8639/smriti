@@ -14,7 +14,7 @@ export const EVENT_TYPES = [
   'atom.approved',     // {atomId, hash} released from Quarantine
   'atom.discarded',    // {atomId, hash} rejected in Quarantine
   'atom.restored',     // {atomId} back into Quarantine
-  'atom.created',      // {atom} made on a device: quick add, Reader, split (origin "self")
+  'atom.created',      // {atom} made on a device: quick add, Reader, split (origin "self"), PDF intake (origin "rule")
   'atom.edited',       // {atomId, fields} change to a self-made atom
   'atom.rebuilt',      // {atomId, kind: mnemonic|split|contrast, text?, into?, with?} leech rebuilt
   'atoms.scheduled',   // {atomIds, reason} due today (missed recall, dropped in notes)
@@ -42,6 +42,17 @@ export const EVENT_TYPES = [
   'mock.cause',        // {mockId, i, cause, trap?, other?, atomIds} autopsy tag for one question
   'mock.discarded',    // {mockId} abandoned before submitting
   'csat.answered',     // {qid, type, level, choice, correct, confidence, ms, sessionId, source}
+  'mains.sprint',      // {attemptId, sprintId, q, intro, headings: [{h, va}], wayForward, dims, ms, limitMs}
+  'mains.answer',      // {attemptId, q, marks, limitMs, writeMs, words, photoIds, rubric, total, dims, valueAdds, modelId}
+  'mains.shadow',      // {attemptId, answerId, rebuilt, matched, missed, extra, score, showMs, ms}
+  'mains.drill',       // {kind: 'directive', item, choice, answer, correct, ms}
+  'mains.case',        // {attemptId, q, stakeholders, values, options: [{text, pros, cons}], choice, justification, ms}
+  'mains.essay',       // {attemptId, theme, brainstorm, outline, introDraft, conclusionDraft, ms}
+  'mains.precis',      // {attemptId, passage, ref, target, words, text, ideas: {total, kept}, ms}
+  'mains.counter',     // {attemptId, claim, counter, rebuttal, ms}
+  'ca.anchored',       // {caId, nodeId, remove?} a static anchor added to (or taken off) a CA item
+  'ca.monthDone',      // {month: 'YYYY-MM', done} reconciliation of a CA month
+  'intake.triaged',    // {batchId, candId, action: keep|discard|edit, revealed, ms, atomId?, sourceId, page}
   'settings.set',      // {key, value} synced settings (active profile, budget, study limits)
   'profile.set',       // {profileId, path, value} profile override; value null removes it
   'backup.exported',   // {deviceName, fileName, events}

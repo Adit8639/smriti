@@ -29,6 +29,9 @@ import { buildMock, answerKind, distractors } from '../js/mockgen.js';
 import { pyqCounts, recencyWeights, subjectOf, rollUp } from '../js/weights.js';
 import { countedAnswers } from '../js/labdata.js';
 import { rng } from '../js/rng.js';
+import { detectDirective, normalizeDim, dimensionOverlap, skeletonDiff, precisCheck, answerLimits, mainsQuestions, valueAddCategory, DIRECTIVES, rubricTotal } from '../js/mains.js';
+import { sentences, scoreSentence, extractCandidates, dupIndex, caShelfFor } from '../js/intake.js';
+import { archiveDay } from '../js/queue.js';
 
 const tests = [];
 const test = (group, name, fn) => tests.push({ group, name, fn });
@@ -1062,6 +1065,97 @@ test('PYQ Spine', 'PYQ weights: five most recent years count fully, older ones h
   const parent = new Map([['n1', 'subj'], ['n2', 'subj'], ['subj', 'root']]);
   eq(subjectOf('n1', parent), 'subj');
   eq(rollUp(weights, (n) => subjectOf(n, parent)).get('subj'), 7);
+});
+
+// ------------------------------------------------------------------ Phase 5: Mains Studio, CA Bridge, intake
+
+test('Mains Studio', 'directives: twelve, decoded from question text', () => {
+  eq(DIRECTIVES.map((d) => d.name), ['Discuss', 'Examine', 'Critically examine', 'Analyse', 'Evaluate', 'Comment', 'Elucidate', 'Explain', 'Justify', 'Illustrate', 'Enumerate', 'Describe']);
+  assert(DIRECTIVES.every((d) => d.structure.length >= 3 && d.check.endsWith('?') && d.patterns.length >= 2 && d.near.length >= 3), 'each has a structure, a check, drill patterns and near directives');
+  eq(detectDirective('Critically analyse the role of the Governor.'), 'critically');
+  eq(detectDirective('Examine the causes and discuss the consequences.'), 'examine');
+  eq(detectDirective('Analyze the impact of GST.'), 'analyse');
+  eq(detectDirective('What is federalism?'), null);
+});
+
+test('Mains Studio', 'dimension overlap with synonyms; skeleton diff; précis and limits', () => {
+  eq(normalizeDim('Constitutional'), 'legal-constitutional');
+  eq(normalizeDim('fiscal'), 'economic');
+  const ov = dimensionOverlap(['constitutional', 'federal', 'economic'], ['legal-constitutional', 'social']);
+  eq([ov.covered, ov.missed, ov.extra], [['constitutional'], ['federal', 'economic'], ['social']]);
+  const d = skeletonDiff({ intro: 'The Rajya Sabha is the Council of States', body: ['Representation through proportional representation by MLAs', 'Federal powers under Articles 249 and 312', 'Revising chamber for ordinary bills', 'Limits on Money Bills and joint sittings'], conclusion: 'A federal check' },
+    { intro: 'Council of States under Article 80', body: ['MLAs elect members by proportional representation', 'Limits: Money Bills and joint sittings', 'Media coverage'], conclusion: '' });
+  eq([d.matched.length, d.missed.length, d.extra, d.score], [2, 2, ['Media coverage'], 0.5]);
+  const pc = precisCheck(Array(90).fill('w').join(' '), Array(31).fill('x').join(' '));
+  eq([pc.target, pc.words, pc.ok], [30, 31, true]);
+  eq(precisCheck(Array(90).fill('w').join(' '), Array(40).fill('x').join(' ')).ok, false);
+  eq(answerLimits({ wordLimits: { 10: 150, 15: 250 }, minutesPerAnswer: { 10: 7, 15: 11 } }, 15), { words: 250, minutes: 11, ms: 660000 });
+  eq(rubricTotal({ demand: 2, structure: 1, dimensions: 2, valueAdd: 1, diagram: 0, conclusion: 2 }), 8);
+});
+
+test('Mains Studio', 'question pool from Mains PYQs, model answers and CA; value-add categories', () => {
+  const d = content();
+  const qs = mainsQuestions({ pyqs: [...d.pyqs, { id: 'm1', year: 2024, paper: 'cse.mains.gs2', stem: 'Critically examine the role of the Speaker.', directive: 'Critically examine', marks: 15, words: 250, nodes: ['cse.gs2.polity.parliament'], dimensions: ['constitutional'] }], answers: d.answers, ca: d.ca, papers: CTX.papers });
+  assert(qs.some((q) => q.ref === 'pyq:m1' && q.directive === 'critically' && q.marks === 15), 'Mains PYQ');
+  assert(!qs.some((q) => q.ref === 'pyq:demo-pyq-2018-governor'), 'objective PYQs are not Mains questions');
+  assert(qs.some((q) => q.ref === 'ans:demo-polity.ans01' && q.directive === 'discuss'), 'model answer');
+  assert(qs.some((q) => q.ref.startsWith('ca:demo-ca-2025-06-census-2027#')), 'CA probable Mains question');
+  eq(valueAddCategory({ text: 'In Kesavananda Bharati v. State of Kerala the Supreme Court held ___', answer: 'basic structure' }), 'judgment');
+  eq(valueAddCategory({ text: 'The ___ Committee recommended Fundamental Duties', answer: 'Swaran Singh' }), 'committee');
+  eq(valueAddCategory({ text: 'x', answer: 'y', tags: ['scheme'] }), 'scheme');
+});
+
+test('Intake', 'sentences keep abbreviations; rules score fact sentences', () => {
+  eq(sentences('Under Art. 21 life is protected. The No. 1 rank went to Kerala. It rained.'), ['Under Art. 21 life is protected.', 'The No. 1 rank went to Kerala.', 'It rained.']);
+  const s = scoreSentence('The Ministry of Jal Shakti launched the scheme in 2026 with ₹500 crore.');
+  assert(['ministry', 'verb', 'year', 'money', 'scheme'].every((x) => s.hits.includes(x)), s.hits.join(','));
+  eq(scoreSentence('It was a pleasant day for everyone involved.').score, 0);
+  eq([caShelfFor('India ranked 39th in the Global Innovation Index'), caShelfFor('A Ramsar site was designated')], [900, 540]);
+});
+
+test('Intake', 'candidates: cloze target, duplicates dropped at Jaccard ≥ 0.8, topics by keyword', () => {
+  const page = 'The Ministry of Environment designated three new Ramsar sites in Tamil Nadu, taking India\'s total to 98 wetlands.\nUnder Article 280, the Finance Commission is constituted every five years.\nThe 73rd Amendment Act, 1992 added Part IX on Panchayats to the Constitution.\nIt is a nice day.';
+  const r = extractCandidates({ texts: [page, page], existing: [{ id: 'x', text: 'The 73rd Amendment Act, 1992 added Part IX on Panchayats to the Constitution.' }],
+    nodes: [{ id: 'env', title: 'Environment', keywords: ['ramsar', 'wetland'] }, { id: 'pol', title: 'Polity', keywords: ['finance commission', 'article'] }] });
+  eq(r.candidates.length, 2, 'page 2 repeats and the existing atom are duplicates');
+  const ramsar = r.candidates.find((c) => /Ramsar/.test(c.sentence));
+  eq([ramsar.answer, ramsar.nodes[0].nodeId], ['98', 'env']);
+  const art = r.candidates.find((c) => /Article/.test(c.sentence));
+  eq([art.answer, art.cloze.includes('Article ___'), art.nodes[0].nodeId], ['280', true, 'pol']);
+  const dup = dupIndex([{ id: 'a', text: 'Starred questions are answered orally in Parliament' }]);
+  eq(dup.check('Starred questions are answered orally in Parliament.'), 'a');
+  eq(dup.check('Unstarred questions are answered in writing'), null);
+});
+
+test('CA Bridge', 'shelf life: own, the CA item\'s, else 540 days; static facts never archive', () => {
+  const day = (iso) => { const [y, m, d] = iso.split('-').map(Number); return new Date(y, m - 1, d).getTime(); };
+  eq(archiveDay({ id: 'a', eventDate: '2026-01-01', shelfLifeDays: 10 }), day('2026-01-11'));
+  eq(archiveDay({ id: 'a', eventDate: '2026-01-01' }, new Map([['a', 900]])), day('2026-01-01') + 900 * 86400000);
+  eq(archiveDay({ id: 'a', eventDate: '2026-01-01' }), day('2026-01-01') + 540 * 86400000);
+  eq(archiveDay({ id: 'b' }), null);
+  assert(isArchived({ id: 'a', eventDate: '2024-01-01' }, day('2026-01-01')) && !isArchived({ id: 'a', eventDate: '2025-12-01' }, day('2026-01-01')));
+});
+
+test('CA Bridge', 'rebuild: anchors, month reconciliation, intake swipes, rule atoms, Mains attempts', () => {
+  let t = 1_700_000_000_000;
+  const ev = (type, payload) => makeEvent(type, payload, 'D1', (t += 1000));
+  const s = rebuild([
+    ev('ca.anchored', { caId: 'c1', nodeId: 'n1' }), ev('ca.anchored', { caId: 'c1', nodeId: 'n2' }), ev('ca.anchored', { caId: 'c1', nodeId: 'n1', remove: true }),
+    ev('ca.monthDone', { month: '2026-09', done: true }), ev('ca.monthDone', { month: '2026-08', done: false }),
+    ev('atom.created', { atom: { id: 'rule.01', text: 'X was launched in ___.', answer: '2026', nodes: ['n1'], source: { sourceId: 'src-1', page: 3 }, origin: 'rule' } }),
+    ev('intake.triaged', { batchId: 'B', candId: 'B.1', action: 'keep', revealed: true, ms: 2000, atomId: 'rule.01' }),
+    ev('intake.triaged', { batchId: 'B', candId: 'B.2', action: 'discard', revealed: true, ms: 1500 }),
+    ev('mains.answer', { attemptId: 'A1', q: { text: 'Discuss X', nodes: ['n1'] }, total: 9, marks: 10 }),
+    ev('mains.sprint', { attemptId: 'S1', q: { text: 'Examine Y', nodes: ['n1'] }, headings: [{ h: 'Political', va: '' }, { h: '', va: '' }] }),
+    ev('mains.answer', { attemptId: 'A1', q: { text: 'duplicate id ignored' }, total: 1 }),
+    ev('mains.drill', { kind: 'directive', correct: true }), ev('mains.drill', { kind: 'directive', correct: false }),
+  ]);
+  eq(s.caAnchors.c1, { n2: true });
+  eq([s.caMonths['2026-09'].done, s.caMonths['2026-08'].done], [true, false]);
+  eq([s.self['rule.01'].origin, !!s.atoms['rule.01'].forcedDue], ['rule', true]);
+  eq([s.intake.B.kept, s.intake.B.discarded, s.intake.B.revealed], [1, 1, 2]);
+  eq([s.mains.attempts.A1.total, s.mains.attempts.S1.headings, s.mains.counts.answer, s.mains.byNode.n1], [9, 1, 1, 2]);
+  eq([s.mains.drill.n, s.mains.drill.right], [2, 1]);
 });
 
 // ------------------------------------------------------------------ app shell

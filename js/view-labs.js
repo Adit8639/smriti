@@ -32,6 +32,23 @@ export async function render() {
       stat: mocks.length ? plural(mocks.filter((m) => m.status !== 'discarded').length, 'mock') : null,
     }),
     labCard({
+      title: 'Mains Studio',
+      text: 'Skeleton sprints (90 s per question), timed answers on paper with a photo and a six-line rubric, compare with topper answers, Shadow Writing, the directive decoder, value-add bank, GS-IV cases and essays.',
+      href: '#/mains', primary: 'Write', links: [['#/mains/sprint?n=5', 'Quick sprint'], ['#/mains?tab=toolkit', 'Directives'], ['#/mains?tab=history', 'History']],
+      stat: Object.keys(s.mains.attempts).length ? plural(Object.keys(s.mains.attempts).length, 'attempt') : null,
+    }),
+    labCard({
+      title: 'CA–Static Bridge',
+      text: 'Each current-affairs item anchored to a static topic: why in news, anchors, Prelims facts, Mains angle and probable questions. Months close only when every item is anchored; CA facts archive after their shelf life.',
+      href: '#/ca', primary: 'Months', links: [],
+    }),
+    labCard({
+      title: 'PDF intake',
+      text: 'Fact-dense sentences from any PDF in Sources, found by rules with no AI: duplicates of your atoms dropped, a topic suggested, then a swipe deck to keep or discard each in about two seconds.',
+      href: '#/intake', primary: 'Start an intake', links: [],
+      stat: Object.keys(s.intake).length ? plural(Object.values(s.intake).reduce((a, b) => a + b.kept, 0), 'fact') + ' kept' : null,
+    }),
+    labCard({
       title: 'CSAT Gym',
       text: 'Generated quant and reasoning in eleven types and three levels (no fixed bank, nothing repeats), comprehension from your packs, and a warning when your projected CSAT nears the qualifying line.',
       href: '#/csat/mixed?level=mixed', primary: 'Mixed set of 20', links: [['#/lab?tab=csat', 'All drills']],

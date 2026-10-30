@@ -14,7 +14,10 @@ import { needsVerify, quarantineStatus, rebuild, applyInPlace } from './rebuild.
 import { compareEvents } from './events.js';
 import { buildQueue } from './queue.js';
 import { STATE_VERSION } from './version.js';
-import { pyqList, pyqsByIds, mockQuestions, projection, packKinds } from './labdata.js';
+import { pyqList, pyqsByIds, mockQuestions, projection, packKinds, nodeMaps } from './labdata.js';
+import { extractCandidates } from './intake.js';
+import { filled } from './cloze.js';
+import { inProfileScope } from './tree.js';
 import { pyqProbe } from './pyq.js';
 import { rng } from './rng.js';
 
@@ -26,6 +29,7 @@ let state = null;
 let flushedCount = -1;
 let atomsCache = null;
 let orderCache = null;
+let caShelfCache = null;
 
 const sig = (entries) => JSON.stringify(entries.map((e) => [e.fileName, e.action, e.totals, e.errors.length]));
 
@@ -71,6 +75,16 @@ function contentChanged() {
   index = null;
   atomsCache = null;
   orderCache = null;
+  caShelfCache = null;
+}
+
+// atomId → shelf life of the CA item that lists it (for archiving CA facts).
+async function caShelf(db) {
+  if (caShelfCache) return caShelfCache;
+  const m = new Map();
+  for (const x of await db.getAll('ca')) for (const id of x.atoms || []) if (!m.has(id) || m.get(id) < x.shelfLifeDays) m.set(id, x.shelfLifeDays);
+  caShelfCache = m;
+  return m;
 }
 
 async function refresh(db) {
@@ -134,7 +148,7 @@ const handlers = {
     const atoms = await allAtoms(db);
     const order = await nodeOrder(db);
     const t0 = performance.now();
-    const q = buildQueue({ ...args, atoms, state: st, nodeOrder: order });
+    const q = buildQueue({ ...args, atoms, state: st, nodeOrder: order, caShelf: await caShelf(db) });
     q.ms = Math.round(performance.now() - t0);
     return q;
   },
@@ -314,6 +328,20 @@ const handlers = {
     const pickT = r.sample(traps, Math.min(traps.length, Math.ceil(n * 0.65)));
     const pickR = r.sample(truths, Math.min(truths.length, n - pickT.length));
     return { items: r.shuffle([...pickT, ...pickR]), available: { traps: traps.length, truths: truths.length } };
+  },
+
+  // Offline intake: rule-based candidates from a source's page text, minus duplicates of
+  // existing atoms, with keyword topic suggestions (topics of the active exam only).
+  async 'intake.extract'(db, { sourceId, from, to, batchId, profile }) {
+    const st = await syncState(db);
+    const rec = await db.get('sources', sourceId);
+    if (!rec || !Array.isArray(rec.texts)) throw new Error('This source has no page text on this device. Add the PDF here first.');
+    const existing = (await allAtoms(db)).map((a) => ({ id: a.id, text: filled(a) }));
+    const { nodes } = await nodeMaps(db);
+    const scoped = [...nodes.values()].filter((n) => !profile || inProfileScope(n, profile));
+    const src = st.sources[sourceId];
+    const mapped = (page) => (src ? Object.entries(src.maps).filter(([, m]) => page >= m.from && page <= m.to).map(([n]) => n) : []);
+    return extractCandidates({ texts: rec.texts, from: from || 1, to: to || rec.texts.length, existing, nodes: scoped, mapped, batchId });
   },
 
   // CSAT questions from packs (PYQ or mock packs on the CSAT paper): comprehension passages

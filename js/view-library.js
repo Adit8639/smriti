@@ -1,6 +1,7 @@
 // Library: syllabus tree with search, and the topic (node) page with everything linked to it.
 
 import { solvePyqs } from './view-lab.js';
+import { newsFor } from './view-ca.js';
 import { h, clear, icon } from './ui.js';
 import { app, allNodes, activeProfile } from './store.js';
 import { buildTree, ancestors } from './tree.js';
@@ -339,6 +340,8 @@ async function renderNode(id, focus) {
   const kids = [...nodes.values()].filter((x) => x.parent === id);
   const paper = app.ctx.papers.get(n.paper);
 
+  const news = await newsFor(id);
+  const vadds = atoms.filter((a) => a.type === 'valueadd');
   const section = (title, list, card) => (list.length
     ? h('section', null, h('h3', { class: 'section-title', text: `${title} (${list.length})` }), list.map((x) => card(x, ctx)))
     : null);
@@ -351,6 +354,10 @@ async function renderNode(id, focus) {
     h('p', { class: 'small muted' }, h('code', { text: n.id }), ` · ${paper ? paper.name : n.paper} · ${n._pack ? `from pack ${n._pack}` : 'starter syllabus'}`),
     n.description ? h('p', { text: n.description }) : null,
     n.keywords && n.keywords.length ? h('p', { class: 'chips' }, n.keywords.map((k) => h('span', { class: 'chip', text: k }))) : null,
+    news.length ? h('div', { class: 'news-chips' }, h('span', { class: 'small muted', text: 'In the news: ' }),
+      news.slice(0, 8).map((x) => h('a', { class: 'chip chip-news', href: `#/ca/item/${encodeURIComponent(x.id)}` }, `${x.date.slice(0, 7)} · ${x.headline.length > 60 ? `${x.headline.slice(0, 57)}…` : x.headline}`))) : null,
+    vadds.length ? h('p', { class: 'small' }, h('strong', { text: 'Value-add bank: ' }), `${vadds.length} here · `,
+      h('a', { href: `#/practice/atoms?mode=practice&ids=${vadds.map((a) => encodeURIComponent(a.id)).join(',')}` }, 'drill them')) : null,
     h('p', { class: 'counts' },
       h('span', null, h('strong', { text: 'Here: ' }), countsText(direct)),
       kids.length ? h('span', null, h('strong', { text: ' · With subtopics: ' }), countsText(total)) : null),
