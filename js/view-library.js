@@ -1,5 +1,6 @@
 // Library: syllabus tree with search, and the topic (node) page with everything linked to it.
 
+import { solvePyqs } from './view-lab.js';
 import { h, clear, icon } from './ui.js';
 import { app, allNodes, activeProfile } from './store.js';
 import { buildTree, ancestors } from './tree.js';
@@ -248,7 +249,8 @@ function pyqCard(q, ctx) {
       h('ol', { class: 'options', type: 'a' }, q.options.map((o, i) => h('li', { class: i === q.answer ? 'correct' : null }, o, i === q.answer ? ' ✓' : ''))),
       q.elimination ? h('p', { class: 'pre small' }, h('span', { class: 'muted', text: 'Elimination: ' }), q.elimination) : null,
       q.traps && q.traps.length ? h('p', { class: 'small' }, h('span', { class: 'muted', text: 'Traps: ' }), q.traps.map((t) => `statement ${t.statement}: ${t.tag}`).join('; ')) : null)
-      : h('p', { class: 'small', text: `${q.directive || ''} · ${q.marks || '?'} marks · ${q.words || '?'} words` }));
+      : h('p', { class: 'small', text: `${q.directive || ''} · ${q.marks || '?'} marks · ${q.words || '?'} words` }),
+    q.options ? h('div', { class: 'card-actions' }, h('button', { class: 'btn small', type: 'button', onclick: () => solvePyqs([q.id], `PYQ ${q.year}`) }, 'Solve it')) : null);
 }
 
 function caCard(x, ctx) {
@@ -357,7 +359,10 @@ async function renderNode(id, focus) {
       h('ul', { class: 'plain link-list' }, kids.map((k) => h('li', null, h('a', { href: `#/node/${encodeURIComponent(k.id)}`, 'data-nav': '' }, k.title, h('span', { class: 'tree-meta', text: countsText(totals[k.id]) })))))) : null,
     section('Atoms', atoms, atomCard),
     section('Probes', [...probeMap.values()].sort((a, b) => (a.id < b.id ? -1 : 1)), probeCard),
-    section('PYQs', pyqs.sort((a, b) => b.year - a.year), pyqCard),
+    pyqs.length ? h('section', null,
+      h('div', { class: 'row-between' }, h('h3', { class: 'section-title', text: `PYQs (${pyqs.length})` }),
+        pyqs.some((q) => q.options) ? h('button', { class: 'btn small primary', type: 'button', onclick: () => solvePyqs(pyqs.filter((q) => q.options).map((q) => q.id), `PYQs: ${n.title}`) }, 'Solve all') : null),
+      pyqs.sort((a, b) => b.year - a.year).map((x) => pyqCard(x, ctx))) : null,
     section('Current affairs', ca.sort((a, b) => (a.date < b.date ? 1 : -1)), caCard),
     section('Notes', notes.sort((a, b) => a.level - b.level), noteCard),
     section('Model answers for this paper', answers, answerCard));

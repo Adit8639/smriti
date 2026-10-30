@@ -14,6 +14,9 @@ import { needsVerify, quarantineStatus, rebuild, applyInPlace } from './rebuild.
 import { compareEvents } from './events.js';
 import { buildQueue } from './queue.js';
 import { STATE_VERSION } from './version.js';
+import { pyqList, pyqsByIds, mockQuestions, projection, packKinds } from './labdata.js';
+import { pyqProbe } from './pyq.js';
+import { rng } from './rng.js';
 
 const dbReady = openDB();
 const pending = new Map();
@@ -254,6 +257,69 @@ const handlers = {
     }
     out.quarantined.sort((a, b) => (a.id < b.id ? -1 : 1));
     return out;
+  },
+
+  async 'lab.pyqs'(db) {
+    return pyqList(db, await syncState(db));
+  },
+
+  async 'lab.pyqsByIds'(db, { ids }) {
+    return pyqsByIds(db, ids || []);
+  },
+
+  async 'mock.build'(db, args) {
+    const st = await syncState(db);
+    const t0 = performance.now();
+    const questions = await mockQuestions(db, st, args);
+    return { questions, ms: Math.round(performance.now() - t0) };
+  },
+
+  async 'lab.projection'(db, args) {
+    return projection(db, await syncState(db), args);
+  },
+
+  // Mock packs (kind "mock") with their question counts.
+  async 'lab.mockPacks'(db) {
+    const packs = (await db.getAll('packs')).filter((p) => p.kind === 'mock');
+    const counts = new Map();
+    for (const [, packId] of await db.keyPairs('pyqs', '_pack')) counts.set(packId, (counts.get(packId) || 0) + 1);
+    return packs.map((p) => ({ id: p.id, title: p.title, version: p.version, questions: counts.get(p.id) || 0 }));
+  },
+
+  // Statements for a trap drill: false statements carrying the given trap tags, mixed with
+  // true statements from the same probes and PYQs so "false" is never a safe default.
+  async 'traps.drill'(db, { tags, n = 20, seed }) {
+    const want = new Set(tags || []);
+    const traps = [];
+    const truths = [];
+    for (const p of await db.getAll('probes')) {
+      (p.statements || []).forEach((x, i) => {
+        const item = { id: `stmt:${p.id}#${i}`, text: String(x.text).replace(/^Statement-(I|II):\s*/, ''), true: x.true, trap: x.trap || null, reason: x.reason || '', atoms: p.atoms || [], explanation: p.explanation || '' };
+        if (x.true === false && want.has(x.trap)) traps.push(item);
+        else if (x.true === true && p.statements.some((y) => want.has(y.trap))) truths.push(item);
+      });
+    }
+    const kinds = await packKinds(db);
+    for (const q of await db.getAll('pyqs')) {
+      if (kinds.get(q._pack) === 'mock' || !Array.isArray(q.options)) continue;
+      const pr = pyqProbe(q);
+      if (!pr.statements) continue;
+      pr.statements.forEach((x, i) => {
+        const item = { id: `stmt:pyq:${q.id}#${i}`, text: x.text, true: x.true, trap: x.trap, reason: '', atoms: q.atoms || [], explanation: q.elimination || '' };
+        if (x.true === false && want.has(x.trap)) traps.push(item);
+        else if (x.true === true && pr.statements.some((y) => want.has(y.trap))) truths.push(item);
+      });
+    }
+    const r = rng(seed || 'drill');
+    const pickT = r.sample(traps, Math.min(traps.length, Math.ceil(n * 0.65)));
+    const pickR = r.sample(truths, Math.min(truths.length, n - pickT.length));
+    return { items: r.shuffle([...pickT, ...pickR]), available: { traps: traps.length, truths: truths.length } };
+  },
+
+  // CSAT questions from packs (PYQ or mock packs on the CSAT paper): comprehension passages
+  // and other objective items.
+  async 'csat.packItems'(db, { paperId }) {
+    return (await db.getAll('pyqs')).filter((q) => q.paper === paperId && Array.isArray(q.options) && Number.isInteger(q.answer));
   },
 
   // Atoms whose topics fall under any of the given node ids (all atoms when none given).

@@ -33,9 +33,10 @@ const active = (atom) => {
 
 // items: [{type:'atom', atomId, kind, node} | {type:'contrast', pair, a, b} | {type:'pyq', pyq} | {type:'probe', probe, atomId}]
 export class Session {
-  constructor({ host, mode = 'review', items, title = 'Review', onEnd, nodeId = null, loopId = null, reinsert = true, counts = null, endLabel = 'Done' }) {
+  constructor({ host, mode = 'review', items, title = 'Review', onEnd, nodeId = null, loopId = null, reinsert = true, counts = null, endLabel = 'Done', autoCause = null }) {
     this.host = host;
     this.mode = mode;
+    this.autoCause = autoCause;
     this.items = items.slice();
     this.title = title;
     this.onEnd = onEnd;
@@ -79,6 +80,11 @@ export class Session {
     clear(this.host).append(this.root);
   }
 
+  // An item can carry its own mode, e.g. linked atoms reviewed for real inside a PYQ set.
+  modeOf(c = this.cur) {
+    return (c && c.item && c.item.mode) || this.mode;
+  }
+
   toggleDebug() {
     const on = !debugOn();
     try { localStorage.setItem(LS_DEBUG, on ? '1' : '0'); } catch (_) { /* preference only */ }
@@ -115,9 +121,9 @@ export class Session {
       const atom = probe.atoms[0] ? await app.db.get('atoms', probe.atoms[0]) : null;
       return { item, atom, probe, kind: 'pyq', target: targetMs(probe, profile) };
     }
-    const atom = await app.db.get('atoms', item.atomId);
-    if (!atom) return null;
+    const atom = item.atomId ? await app.db.get('atoms', item.atomId) : null;
     if (item.type === 'probe') return { item, atom, probe: item.probe, kind: item.kind || 'practice', target: targetMs(item.probe, profile), scores: null };
+    if (!atom) return null;
     const raw = await app.db.getAllByIndex('probes', 'atoms', atom.id);
     const usable = [];
     for (const p of raw) {
@@ -144,7 +150,7 @@ export class Session {
     const node = c.atom && c.atom.nodes && nodes.get(c.atom.nodes[0]);
     this.headCount.textContent = ` · ${Math.min(this.idx + 1, this.items.length)} / ${this.items.length}`;
     this.headNode.textContent = node ? node.title : '';
-    const kindLabel = { new: 'New', due: 'Due', learning: 'Learning', forced: 'Today', contrast: 'Contrast', pyq: 'PYQ', practice: 'Practice', pretest: 'Pre-test' }[c.kind] || '';
+    const kindLabel = { new: 'New', due: 'Due', learning: 'Learning', forced: 'Today', contrast: 'Contrast', pyq: 'PYQ', practice: 'Practice', pretest: 'Pre-test', linked: 'Linked atom', drill: 'Trap drill' }[c.kind] || '';
     this.probeHost = h('div', { class: 'rv-probe' });
     this.revealBox = h('div', { class: 'rv-reveal', hidden: true });
     this.debugBox = h('div', { class: 'rv-debug', hidden: true });
@@ -152,8 +158,9 @@ export class Session {
       h('div', { class: 'rv-meta' },
         h('span', { class: 'badge', text: FORMAT_LABEL[c.probe.format] || c.probe.format }),
         kindLabel && kindLabel !== (FORMAT_LABEL[c.probe.format] || c.probe.format) ? h('span', { class: 'badge muted', text: kindLabel }) : null,
-        this.mode === 'pretest' ? h('span', { class: 'badge warn', text: 'Pre-test: misses are expected' }) : null,
-        this.mode === 'practice' ? h('span', { class: 'badge muted', text: 'Practice: schedule unchanged' }) : null),
+        this.modeOf(c) === 'pretest' ? h('span', { class: 'badge warn', text: 'Pre-test: misses are expected' }) : null,
+        this.modeOf(c) === 'practice' ? h('span', { class: 'badge muted', text: 'Practice: schedule unchanged' }) : null,
+        c.probe.pyq && c.probe.pyq.year ? h('span', { class: 'badge muted', text: `${c.probe.pyq.year}${c.probe.pyq.answerSource && c.probe.pyq.answerSource !== 'official' ? ` · ${c.probe.pyq.answerSource} key` : ''}` }) : null),
       this.probeHost, this.revealBox, this.debugBox);
     this.ctl = mountProbe(this.probeHost, c.probe, { seed: `${c.probe.id}|${this.sessionId}|${this.idx}`, onChange: () => this.drawFoot() });
     this.drawFoot();
@@ -198,7 +205,7 @@ export class Session {
       return;
     }
     if (c.stage === 'revealed') {
-      if (!RATED_MODES.has(this.mode) || c.kind === 'contrast') {
+      if (!RATED_MODES.has(this.modeOf(c)) || c.kind === 'contrast' || !c.atom) {
         this.foot.append(h('div', { class: 'foot-row' }, h('button', { class: 'btn primary grow', type: 'button', onclick: () => this.onRate(null) }, 'Next', h('span', { class: 'kbd', text: 'Space' }))));
         return;
       }
@@ -273,6 +280,7 @@ export class Session {
     if (c.atom && c.probe.format !== 'contrast') box.append(h('p', { class: 'fact' }, h('span', { class: 'muted', text: 'Fact: ' }), filled(c.atom)));
     if (c.probe.explanation && !c.probe.auto) box.append(h('p', { class: 'pre small' }, h('span', { class: 'muted', text: c.probe.format === 'pyq' ? 'Elimination: ' : 'Why: ' }), c.probe.explanation));
     if (c.probe.format === 'contrast') box.append(h('p', { class: 'pre' }, c.probe.explanation));
+    if (c.probe.format === 'pyq') this.drawPyqExtras(box, c);
     const rec = c.atom && app.state.atoms[c.atom.id];
     const mnemonic = (rec && rec.mnemonic) || (c.atom && c.atom.mnemonic);
     if (mnemonic) box.append(h('p', { class: 'small' }, h('span', { class: 'muted', text: 'Mnemonic: ' }), mnemonic));
@@ -282,6 +290,19 @@ export class Session {
       box.append(h('p', { class: 'source small' }, h('span', { class: 'muted', text: 'Source: ' }), sourceLabel(c.atom, this.packs, pyqs),
         target ? [' ', h('button', { class: 'link-btn', type: 'button', onclick: () => openSource(target) }, `Open page ${target.page}`)] : null));
     }
+  }
+
+  async drawPyqExtras(box, c) {
+    const q = c.probe.pyq;
+    const letters = ['a', 'b', 'c', 'd'];
+    if (Number.isInteger(q.answer) && q.options) box.append(h('p', { class: 'small' }, h('span', { class: 'muted', text: 'Answer: ' }), `(${letters[q.answer]}) ${q.options[q.answer]}`,
+      q.answerSource && q.answerSource !== 'official' ? h('span', { class: 'muted', text: ` · ${q.answerSource} key` }) : null));
+    const tags = (q.traps || []).filter((t) => t && t.tag);
+    if (tags.length) box.append(h('p', { class: 'small' }, h('span', { class: 'muted', text: 'Traps: ' }), tags.map((t) => `${Number.isInteger(t.statement) ? `statement ${t.statement}` : `“${String(t.statement).slice(0, 40)}”`}: ${t.tag.replace(/-/g, ' ')}`).join(' · ')));
+    const atoms = (await Promise.all((q.atoms || []).map((id) => app.db.get('atoms', id)))).filter((a) => a && active(a));
+    if (!atoms.length || !box.isConnected) return;
+    const btn = h('button', { class: 'btn small', type: 'button', onclick: () => { const n = this.queueLinked(atoms); btn.disabled = true; btn.textContent = n ? `${n} queued next` : 'Already queued'; } }, `Review ${atoms.length > 1 ? `these ${atoms.length} atoms` : 'this atom'} next`);
+    box.append(h('div', { class: 'linked' }, h('p', { class: 'small muted', text: 'Linked atoms:' }), h('ul', { class: 'plain small' }, atoms.map((a) => h('li', { text: filled(a) }))), btn));
   }
 
   async onRate(rating) {
@@ -295,18 +316,20 @@ export class Session {
     if (isContrast) {
       events.push(['contrast.done', { pair: c.item.pair, correct: result.correct, confidence: c.confidence, ms: c.ms, sessionId: this.sessionId }]);
     } else {
-      const finalRating = RATED_MODES.has(this.mode) ? (rating || c.suggested) : null;
+      const mode = this.modeOf(c);
+      const rated = RATED_MODES.has(mode) && !!c.atom;
+      const finalRating = rated ? (rating || c.suggested) : null;
       events.push(['review.done', {
         atomId: c.atom ? c.atom.id : null,
         probeId: c.probe.id,
         format: c.probe.format,
-        mode: this.mode,
+        mode,
         correct: result.correct,
         partial: !!result.partial,
         confidence: c.confidence,
         ms: c.ms,
         target: c.target,
-        suggested: RATED_MODES.has(this.mode) ? c.suggested : null,
+        suggested: rated ? c.suggested : null,
         rating: finalRating,
         sessionId: this.sessionId,
         loopId: this.loopId,
@@ -316,7 +339,7 @@ export class Session {
     }
     // Wrong options, pairings or positions that belong to another atom log a confusion.
     let hits = [];
-    if (!result.correct && c.atom && this.mode !== 'pretest') {
+    if (!result.correct && c.atom && this.modeOf(c) !== 'pretest') {
       const pool = await this.blamePool(c);
       hits = detectConfusions(c.probe, c.response || {}, c.atom, pool);
       for (const hit of hits) events.push(['confusion.hit', { ...hit, probeId: c.probe.id }]);
@@ -338,14 +361,17 @@ export class Session {
       interval: after.card && c.finalRating ? formatInterval(after.card.due - clock.now()) : '—', hits: hits.length,
     });
     if (hits.length) toast(`Logged a confusion with ${hits.length > 1 ? `${hits.length} atoms` : 'another atom'}.`, { ms: 3000 });
-    if (!result.correct && c.atom && !isContrast && this.mode !== 'pretest' && reviewId) await this.askCause(c, reviewId);
+    if (!result.correct && (c.atom || c.kind === 'pyq') && !isContrast && this.modeOf(c) !== 'pretest' && reviewId) {
+      if (this.autoCause) await this.saveCause(c, reviewId, this.autoCause(c));
+      else await this.askCause(c, reviewId);
+    }
     if (after.suspended && !before.suspended) this.leechNotice(c.atom);
-    if (this.reinsert && after.card && (after.card.state === State.Learning || after.card.state === State.Relearning)) {
+    if ((this.reinsert || c.item.mode === 'review') && after.card && (after.card.state === State.Learning || after.card.state === State.Relearning)) {
       const wait = after.card.due - clock.now();
       if (wait <= LEARN_AHEAD) {
         for (let i = this.items.length - 1; i > this.idx; i--) if (this.items[i].atomId === c.atom.id) this.items.splice(i, 1);
         const pos = Math.min(this.items.length, this.idx + 1 + Math.max(3, Math.round(wait / 12000)));
-        this.items.splice(pos, 0, { type: 'atom', atomId: c.atom.id, kind: 'learning', node: (c.atom.nodes || [''])[0] });
+        this.items.splice(pos, 0, { type: 'atom', atomId: c.atom.id, kind: 'learning', node: (c.atom.nodes || [''])[0], mode: c.item.mode });
       }
     }
     this.idx++;
@@ -364,22 +390,38 @@ export class Session {
 
   async askCause(c, reviewId) {
     const suggestions = [];
-    for (const id of [...(c.atom.confusables || []), ...(c.probe.atoms || [])]) {
-      if (id === c.atom.id) continue;
+    for (const id of [...((c.atom && c.atom.confusables) || []), ...(c.probe.atoms || [])]) {
+      if (c.atom && id === c.atom.id) continue;
       const a = await app.db.get('atoms', id);
       if (a && !suggestions.some((x) => x.id === a.id)) suggestions.push(a);
     }
     const marks = c.response && c.response.marks;
-    const missed = marks && (c.probe.statements || []).find((s, i) => marks[i] !== undefined && marks[i] !== s.true);
-    const answer = await causeSheet({ atom: c.atom, defaultTrap: missed ? missed.trap : null, suggestions });
+    const missed = marks && (c.probe.statements || []).find((s, i) => (s.true === true || s.true === false) && marks[i] !== undefined && marks[i] !== s.true);
+    const trapGuess = missed ? missed.trap : ((c.probe.statements || []).find((s) => s.trap) || {}).trap || null;
+    const answer = await causeSheet({ atom: c.atom, defaultTrap: trapGuess, suggestions });
     if (!answer) return;
-    const events = [['review.cause', { reviewId, atomId: c.atom.id, cause: answer.cause, other: answer.other || null, trap: answer.trap || null }]];
-    if (answer.cause === 'confused' && answer.other) events.push(['confusion.hit', { a: c.atom.id, b: answer.other, via: 'cause', reviewId }]);
+    await this.saveCause(c, reviewId, answer);
+  }
+
+  async saveCause(c, reviewId, answer) {
+    if (!answer) return;
+    const pyqId = c.probe.pyq ? c.probe.pyq.id : null;
+    const events = [['review.cause', { reviewId, atomId: c.atom ? c.atom.id : null, pyqId, cause: answer.cause, other: answer.other || null, trap: answer.trap || null }]];
+    if (answer.cause === 'confused' && answer.other && c.atom) events.push(['confusion.hit', { a: c.atom.id, b: answer.other, via: 'cause', reviewId }]);
     try {
       await appendEvents(events);
     } catch (e) {
       toast(`Could not save the cause: ${e.message}`, { kind: 'error' });
     }
+  }
+
+  // Linked atoms of a PYQ, reviewed for real right after it.
+  queueLinked(atoms) {
+    const have = new Set(this.items.slice(this.idx + 1).map((x) => x.atomId));
+    const add = atoms.filter((a) => !have.has(a.id)).map((a) => ({ type: 'atom', atomId: a.id, kind: 'linked', node: (a.nodes || [''])[0], mode: 'review' }));
+    this.items.splice(this.idx + 1, 0, ...add);
+    this.headCount.textContent = ` · ${Math.min(this.idx + 1, this.items.length)} / ${this.items.length}`;
+    return add.length;
   }
 
   leechNotice(atom) {
@@ -432,7 +474,7 @@ export class Session {
       else if (k === 'n') this.onSelf(false);
       else handled = false;
     } else if (c.stage === 'revealed') {
-      if (['1', '2', '3', '4'].includes(k) && RATED_MODES.has(this.mode) && c.kind !== 'contrast') this.onRate(Number(k));
+      if (['1', '2', '3', '4'].includes(k) && RATED_MODES.has(this.modeOf(c)) && c.kind !== 'contrast' && c.atom) this.onRate(Number(k));
       else if (k === ' ' || k === 'Enter') this.onRate(null);
       else handled = false;
     } else handled = false;

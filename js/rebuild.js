@@ -43,7 +43,23 @@ export function initialState() {
     packSources: {},     // packId -> {sourceId, offset}
     sourceRevisions: {}, // sourceId -> note revisions written while it was mapped
     sessions: {},        // sessionId -> {kind, start, end, active, reviews, correct}
+    objective: [],       // last 1000 objective answers {t, c, ok, src, f, a?, q?, s?, m?} (calibration)
+    pyqStats: {},        // pyqId -> {n, right, lastTs, lastOk, pendingCause?}
+    mocks: {},           // mockId -> {title, source, paper, n, key[], fmt[], subj[], status, result…}
+    csat: { byType: {}, recent: [] }, // CSAT Gym answers
   };
+}
+
+export const OBJECTIVE_KEEP = 1000;
+const MOCK_NEEDS = (key, answers) => key.map((k, i) => {
+  const a = answers[i];
+  if (!a || !Number.isInteger(a.choice)) return null;
+  return a.choice !== k || a.confidence === 'guess' ? i : null;
+}).filter((x) => x !== null);
+
+function pushObjective(s, entry) {
+  s.objective.push(entry);
+  if (s.objective.length > OBJECTIVE_KEEP) s.objective.splice(0, s.objective.length - OBJECTIVE_KEEP);
 }
 
 const str = (v) => typeof v === 'string' && v.length > 0;
@@ -75,6 +91,19 @@ function sessionTouch(s, p, ts, ms, counted, correct) {
 }
 
 function onReview(s, e, p) {
+  const pyqId = str(p.probeId) && p.probeId.startsWith('pyq:') ? p.probeId.slice(4) : null;
+  if (pyqId) {
+    const q = s.pyqStats[pyqId] || (s.pyqStats[pyqId] = { n: 0, right: 0, lastTs: null, lastOk: null });
+    q.n++;
+    if (p.correct) q.right++;
+    q.lastTs = e.ts;
+    q.lastOk = !!p.correct;
+    if (!p.correct && !str(p.atomId) && p.mode !== 'pretest') q.pendingCause = e.id;
+    else delete q.pendingCause;
+  }
+  if (CONFIDENCES.includes(p.confidence) && p.mode !== 'pretest') {
+    pushObjective(s, { t: e.ts, c: p.confidence, ok: !!p.correct, src: pyqId ? 'pyq' : p.mode || 'review', f: p.format || null, a: str(p.atomId) ? p.atomId : null, q: pyqId });
+  }
   if (!str(p.atomId)) {
     // A PYQ with no linked atom (pre-test): counts for calibration and the session only.
     if (CONFIDENCES.includes(p.confidence)) {
@@ -123,23 +152,107 @@ function onReview(s, e, p) {
   }
 }
 
-function onCause(s, e, p) {
-  if (!str(p.atomId) || !CAUSES.includes(p.cause)) return;
-  const a = atomRec(s, p.atomId);
-  if (!p.reviewId || a.pendingCause === p.reviewId) delete a.pendingCause;
+function countCause(s, e, p, ref) {
   s.causes[p.cause] = (s.causes[p.cause] || 0) + 1;
-  (a.causes || (a.causes = {}))[p.cause] = (a.causes[p.cause] || 0) + 1;
-  if (p.cause === 'didnt-know') {
-    if (a.card) a.card = fsrsForget(a.card, e.ts, s.settings.retention);
-    a.forcedDue = e.ts;
-  } else if (p.cause === 'misread' || p.cause === 'trap') {
+  if (p.cause === 'misread' || p.cause === 'trap') {
     const tag = TRAPS.includes(p.trap) ? p.trap : 'untagged';
     s.traps[tag] = (s.traps[tag] || 0) + 1;
-    s.trapLog.push({ atomId: p.atomId, tag, cause: p.cause, ts: e.ts });
+    s.trapLog.push({ ...ref, tag, cause: p.cause, ts: e.ts });
     if (s.trapLog.length > 50) s.trapLog.shift();
   } else if (p.cause === 'silly' || p.cause === 'overthought') {
     s.slips[p.cause] = (s.slips[p.cause] || 0) + 1;
   }
+}
+
+function onCause(s, e, p) {
+  if (!CAUSES.includes(p.cause)) return;
+  if (!str(p.atomId)) {
+    // A PYQ with no linked atom: the cause still counts towards the error mix and traps.
+    if (!str(p.pyqId)) return;
+    const q = s.pyqStats[p.pyqId];
+    if (q && (!p.reviewId || q.pendingCause === p.reviewId)) delete q.pendingCause;
+    countCause(s, e, p, { atomId: null, pyqId: p.pyqId });
+    return;
+  }
+  const a = atomRec(s, p.atomId);
+  if (!p.reviewId || a.pendingCause === p.reviewId) delete a.pendingCause;
+  if (str(p.pyqId) && s.pyqStats[p.pyqId] && (!p.reviewId || s.pyqStats[p.pyqId].pendingCause === p.reviewId)) delete s.pyqStats[p.pyqId].pendingCause;
+  (a.causes || (a.causes = {}))[p.cause] = (a.causes[p.cause] || 0) + 1;
+  if (p.cause === 'didnt-know') {
+    if (a.card) a.card = fsrsForget(a.card, e.ts, s.settings.retention);
+    a.forcedDue = e.ts;
+  }
+  countCause(s, e, p, { atomId: p.atomId });
+}
+
+function onMockStarted(s, e, p) {
+  if (!str(p.mockId) || !Array.isArray(p.questions) || s.mocks[p.mockId]) return;
+  const qs = p.questions;
+  s.mocks[p.mockId] = {
+    title: p.title || 'Mock', source: p.source || 'generated', paper: p.paper || null, n: qs.length,
+    startedTs: e.ts, durationMs: Number(p.durationMs) || 0, marks: isObj(p.marks) ? p.marks : { right: 2, wrong: 2 / 3 },
+    key: qs.map((q) => (isObj(q) && Number.isInteger(q.answer) ? q.answer : -1)),
+    fmt: qs.map((q) => (isObj(q) && str(q.format) ? q.format : null)),
+    subj: qs.map((q) => (isObj(q) && str(q.subject) ? q.subject : null)),
+    status: 'started', deviceId: e.deviceId, eventId: e.id,
+  };
+}
+
+function onMockSubmitted(s, e, p) {
+  const m = str(p.mockId) && s.mocks[p.mockId];
+  if (!m || m.status !== 'started' || !Array.isArray(p.answers)) return;
+  const answers = m.key.map((_, i) => {
+    const a = isObj(p.answers[i]) ? p.answers[i] : {};
+    return { choice: Number.isInteger(a.choice) ? a.choice : null, confidence: CONFIDENCES.includes(a.confidence) ? a.confidence : null, ms: clampMs(a.ms), marked: !!a.marked };
+  });
+  let right = 0;
+  let wrong = 0;
+  answers.forEach((a, i) => {
+    if (a.choice === null) return;
+    const ok = a.choice === m.key[i];
+    if (ok) right++; else wrong++;
+    if (a.confidence) pushObjective(s, { t: e.ts, c: a.confidence, ok, src: 'mock', f: m.fmt[i], s: m.subj[i], m: p.mockId });
+  });
+  m.status = 'submitted';
+  m.submittedTs = e.ts;
+  m.elapsedMs = clampMs(p.elapsedMs) || Math.max(0, e.ts - m.startedTs);
+  m.choice = answers.map((a) => a.choice);
+  m.conf = answers.map((a) => a.confidence);
+  m.ms = answers.map((a) => a.ms);
+  m.right = right;
+  m.wrong = wrong;
+  m.skipped = m.n - right - wrong;
+  m.score = Math.round((right * m.marks.right - wrong * m.marks.wrong) * 100) / 100;
+  m.max = Math.round(m.n * m.marks.right * 100) / 100;
+  m.needs = MOCK_NEEDS(m.key, answers);
+  m.tags = {};
+  m.unlocked = m.needs.length === 0;
+  if (m.unlocked) m.unlockedTs = e.ts;
+}
+
+function onMockCause(s, e, p) {
+  const m = str(p.mockId) && s.mocks[p.mockId];
+  if (!m || m.status !== 'submitted' || !Number.isInteger(p.i) || !m.needs.includes(p.i) || !CAUSES.includes(p.cause)) return;
+  const first = !m.tags[p.i];
+  m.tags[p.i] = p.cause;
+  if (first) countCause(s, e, p, { atomId: Array.isArray(p.atomIds) && str(p.atomIds[0]) ? p.atomIds[0] : null, mockId: p.mockId, i: p.i });
+  // Gaps found in a mock go straight into today's reviews.
+  if ((p.cause === 'didnt-know' || p.cause === 'forgot' || p.cause === 'confused') && Array.isArray(p.atomIds)) {
+    for (const id of p.atomIds) if (str(id)) atomRec(s, id).forcedDue = e.ts;
+  }
+  if (p.cause === 'confused' && Array.isArray(p.atomIds) && str(p.atomIds[0]) && str(p.other)) onConfusion(s, e, { a: p.atomIds[0], b: p.other });
+  if (!m.unlocked && m.needs.every((i) => m.tags[i])) { m.unlocked = true; m.unlockedTs = e.ts; }
+}
+
+function onCsat(s, e, p) {
+  if (!str(p.type)) return;
+  const t = s.csat.byType[p.type] || (s.csat.byType[p.type] = { n: 0, right: 0, ms: 0 });
+  t.n++;
+  if (p.correct) t.right++;
+  t.ms += clampMs(p.ms);
+  s.csat.recent.push({ t: e.ts, type: p.type, level: Number(p.level) || 1, ok: !!p.correct, ms: clampMs(p.ms), c: CONFIDENCES.includes(p.confidence) ? p.confidence : null, skip: p.choice === null || p.choice === undefined, q: str(p.qid) ? p.qid.slice(0, 160) : null });
+  if (s.csat.recent.length > 500) s.csat.recent.shift();
+  sessionTouch(s, p, e.ts, p.ms, true, p.correct);
 }
 
 function onConfusion(s, e, p) {
@@ -236,6 +349,21 @@ export function applyInPlace(s, e) {
     case 'confusion.hit':
       onConfusion(s, e, p);
       break;
+    case 'mock.started':
+      onMockStarted(s, e, p);
+      break;
+    case 'mock.submitted':
+      onMockSubmitted(s, e, p);
+      break;
+    case 'mock.cause':
+      onMockCause(s, e, p);
+      break;
+    case 'mock.discarded':
+      if (str(p.mockId) && s.mocks[p.mockId] && s.mocks[p.mockId].status === 'started') s.mocks[p.mockId].status = 'discarded';
+      break;
+    case 'csat.answered':
+      onCsat(s, e, p);
+      break;
     case 'contrast.done': {
       const c = str(p.pair) ? s.confusions[p.pair] : null;
       if (c && c.contrast) {
@@ -247,6 +375,7 @@ export function applyInPlace(s, e) {
         const k = s.calib[p.confidence] || (s.calib[p.confidence] = { n: 0, correct: 0 });
         k.n++;
         if (p.correct) k.correct++;
+        pushObjective(s, { t: ts, c: p.confidence, ok: !!p.correct, src: 'contrast', f: 'contrast', a: null });
       }
       sessionTouch(s, p, ts, p.ms, true, p.correct);
       break;

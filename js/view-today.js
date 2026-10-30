@@ -1,7 +1,7 @@
 // Today: the daily hub. What is due, what to learn next, decks that need attention, and
 // quick add.
 
-import { h } from './ui.js';
+import { h, toast } from './ui.js';
 import { app, allNodes, activeProfile, appendEvents, emit } from './store.js';
 import { buildQueueNow, activeToday, minutesToday } from './study.js';
 import { examCountdown, phaseOn } from './profiles.js';
@@ -30,6 +30,16 @@ export function nextTopic() {
 
 async function tagPending(list) {
   for (const p of list) {
+    if (p.pyqId) {
+      // A PYQ with no linked atom.
+      const q = await app.db.get('pyqs', p.pyqId);
+      if (!q) continue;
+      toast(`PYQ ${q.year}: ${String(q.stem).replace(/\s+/g, ' ').slice(0, 90)}…`, { ms: 5000 });
+      const ans = await causeSheet({ atom: null });
+      if (!ans) break;
+      await appendEvents([['review.cause', { reviewId: p.reviewId, atomId: null, pyqId: q.id, cause: ans.cause, other: ans.other || null, trap: ans.trap || null }]]);
+      continue;
+    }
     const atom = await app.db.get('atoms', p.atomId);
     if (!atom) continue;
     const ans = await causeSheet({ atom });
@@ -38,6 +48,12 @@ async function tagPending(list) {
     if (ans.cause === 'confused' && ans.other) ev.push(['confusion.hit', { a: atom.id, b: ans.other, via: 'cause', reviewId: p.reviewId }]);
     await appendEvents(ev);
   }
+}
+
+// Misses still waiting for a cause: atoms from the queue, PYQs without atoms from state.
+function pendingCauses(q) {
+  const pyq = Object.entries(app.state.pyqStats).filter(([, x]) => x.pendingCause).map(([pyqId, x]) => ({ pyqId, reviewId: x.pendingCause }));
+  return [...q.pending, ...pyq];
 }
 
 export async function render() {
@@ -88,9 +104,17 @@ export async function render() {
   const qn = app.derived.summary ? app.derived.summary.quarantine : 0;
   if (qn) decks.push(h('a', { class: 'deck', href: '#/quarantine' }, h('strong', { text: 'Quarantine' }), h('span', { class: 'badge warn', text: String(qn) }), h('span', { class: 'small muted', text: 'AI-written or "verify" atoms waiting for approval' })));
   if (q.leeches.length) decks.push(h('a', { class: 'deck', href: '#/leeches' }, h('strong', { text: 'Rebuild leeches' }), h('span', { class: 'badge warn', text: String(q.leeches.length) }), h('span', { class: 'small muted', text: 'Suspended after repeated lapses' })));
-  if (q.pending.length) {
-    decks.push(h('button', { class: 'deck', type: 'button', onclick: async () => { await tagPending(q.pending); emit('rerender'); } },
-      h('strong', { text: 'Misses without a cause' }), h('span', { class: 'badge warn', text: String(q.pending.length) }), h('span', { class: 'small muted', text: 'Tag each one: errors are data' })));
+  const pending = pendingCauses(q);
+  if (pending.length) {
+    decks.push(h('button', { class: 'deck', type: 'button', onclick: async () => { await tagPending(pending); emit('rerender'); } },
+      h('strong', { text: 'Misses without a cause' }), h('span', { class: 'badge warn', text: String(pending.length) }), h('span', { class: 'small muted', text: 'Tag each one: errors are data' })));
+  }
+  const autopsies = Object.entries(app.state.mocks).filter(([, m]) => m.status === 'submitted' && !m.unlocked);
+  for (const [id, m] of autopsies) {
+    decks.push(h('a', { class: 'deck', href: `#/mock/${id}` }, h('strong', { text: 'Mock autopsy' }), h('span', { class: 'badge warn', text: String(m.needs.length - Object.keys(m.tags).length) }), h('span', { class: 'small muted', text: `${m.title}: tag the misses to unlock the score` })));
+  }
+  for (const [id, m] of Object.entries(app.state.mocks).filter(([, x]) => x.status === 'started')) {
+    decks.push(h('a', { class: 'deck', href: `#/mock/${id}` }, h('strong', { text: 'Mock in progress' }), h('span', { class: 'small muted', text: `${m.title}: resume where you paused` })));
   }
   if (decks.length) root.append(h('section', { class: 'card' }, h('h2', { text: 'Needs you' }), h('div', { class: 'decks' }, decks)));
 

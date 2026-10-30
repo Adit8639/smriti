@@ -8,6 +8,7 @@ import { Session, summaryView } from './session.js';
 import { buildQueueNow } from './study.js';
 import { formatDateTime } from './util.js';
 import { quarantineStatus } from './rebuild.js';
+import { call } from './data.js';
 
 let current = null;
 
@@ -24,14 +25,16 @@ function frame(body) {
 async function run(host, make) {
   document.body.classList.add('focus');
   const s = await make();
-  if (!s) return;
+  if (!s || !host.isConnected) return;
   current = s;
   await s.start();
 }
 
-function doneScreen(host, sum, { title, counts, again }) {
+function doneScreen(host, sum, { title, counts, again, back = null }) {
+  // A session ended by leaving the screen must not touch the next screen.
+  if (!host.isConnected) return;
   document.body.classList.remove('focus');
-  const actions = [h('a', { class: 'btn primary', href: '#/today' }, 'Back to Today')];
+  const actions = [back ? h('a', { class: 'btn primary', href: back[0] }, back[1]) : h('a', { class: 'btn primary', href: '#/today' }, 'Back to Today')];
   if (again) actions.push(h('button', { class: 'btn', type: 'button', onclick: again }, 'Review more'));
   clear(host).append(frame(summaryView(sum, { title, counts, actions })));
 }
@@ -60,6 +63,34 @@ export async function render(route) {
 
   // Practice
   const arg = route.arg || '';
+  if (arg === 'pyqs') {
+    // A PYQ set chosen in the Prelims Lab (ids in sessionStorage under the route's token).
+    setTimeout(() => run(host, async () => {
+      let set = null;
+      try { set = JSON.parse(sessionStorage.getItem(route.query.get('set') || '') || 'null'); } catch (_) { set = null; }
+      const pyqs = set && Array.isArray(set.ids) ? await call('lab.pyqsByIds', { ids: set.ids }) : [];
+      if (!pyqs.length) { document.body.classList.remove('focus'); clear(host).append(frame(h('div', { class: 'card' }, h('p', { text: 'This PYQ set has expired. Choose it again in the Prelims Lab.' }), h('a', { class: 'btn', href: '#/lab?tab=pyqs' }, 'Prelims Lab')))); return null; }
+      const items = pyqs.map((q) => ({ type: 'pyq', pyq: q, kind: 'pyq', node: (q.nodes || [''])[0] }));
+      return new Session({ host, mode: 'practice', items, title: set.title || 'PYQs', onEnd: (sum) => doneScreen(host, sum, { title: 'PYQ set done', back: ['#/lab?tab=pyqs', 'Back to PYQs'] }) });
+    }), 0);
+    return host;
+  }
+  if (arg === 'traps') {
+    // Trap drill: statements built on the chosen trap tags, mixed with true statements.
+    setTimeout(() => run(host, async () => {
+      const tags = (route.query.get('tags') || '').split(',').filter(Boolean);
+      const r = await call('traps.drill', { tags, n: 20, seed: `${Date.now()}` });
+      if (!r.items.length) { document.body.classList.remove('focus'); clear(host).append(frame(h('div', { class: 'card' }, h('h2', { text: 'No statements for this trap yet' }), h('p', { text: 'Trap drills use statements from your probes and PYQs that carry these trap tags. Import packs with statement probes (Forge F1/F2).' }), h('a', { class: 'btn', href: '#/lab?tab=traps' }, 'Back to the Trap Log')))); return null; }
+      const items = r.items.map((x) => ({ type: 'probe', kind: 'drill', atomId: x.atoms[0] || null, probe: { id: x.id, format: 'tf', atoms: x.atoms, stem: 'True or false?', statements: [{ text: x.text, true: x.true, trap: x.trap, reason: x.reason }], explanation: x.explanation, difficulty: 2 } }));
+      return new Session({
+        host, mode: 'practice', items, title: `Trap drill: ${tags.map((t) => t.replace(/-/g, ' ')).join(', ')}`,
+        // A false statement judged true is the trap working; a true one judged false is overcaution.
+        autoCause: (c) => { const st = c.probe.statements[0]; return st.true ? { cause: 'overthought' } : { cause: 'trap', trap: st.trap }; },
+        onEnd: (sum) => doneScreen(host, sum, { title: 'Trap drill done', back: ['#/lab?tab=traps', 'Back to the Trap Log'] }),
+      });
+    }), 0);
+    return host;
+  }
   if (arg.startsWith('probe/')) {
     const probeId = arg.slice(6);
     setTimeout(() => run(host, async () => {

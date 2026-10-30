@@ -22,6 +22,13 @@ import { detectConfusions } from '../js/confusion.js';
 import { ankiTsv } from '../js/anki.js';
 import { suggestByKeywords, suggestFromPack, reflow } from '../js/sources.js';
 import { pairKey } from '../js/rebuild.js';
+import { parseStatements, inferTruth, optionSet, polarity, pyqProbe } from '../js/pyq.js';
+import { bandStats, ruleText, marksFor, scoreMock, simulate, projectBand, expectedQuestions, attemptBands, breakEven, projectCsat } from '../js/calib.js';
+import { generate, generateSet, CSAT_TYPES } from '../js/csat.js';
+import { buildMock, answerKind, distractors } from '../js/mockgen.js';
+import { pyqCounts, recencyWeights, subjectOf, rollUp } from '../js/weights.js';
+import { countedAnswers } from '../js/labdata.js';
+import { rng } from '../js/rng.js';
 
 const tests = [];
 const test = (group, name, fn) => tests.push({ group, name, fn });
@@ -852,6 +859,209 @@ test('End to end', 'self-made atoms are rebuilt from events on another device', 
   dbX.close(); dbY.close();
   await deleteDB('smriti-selftest-x');
   await deleteDB('smriti-selftest-y');
+});
+
+// ------------------------------------------------------------------ Phase 4: Prelims Lab
+
+test('Calibration', 'acceptance: numbers match a hand calculation on 10 answers', () => {
+  // Hand calculation, GS-I marking (+2, −2/3):
+  //   Sure: 4 answers, 3 right → 75%;  EV = 2×0.75 − (2/3)×0.25 = 1.3333
+  //   50-50: 4 answers, 2 right → 50%; EV = 2×0.5 − (2/3)×0.5 = 0.6667
+  //   Guess: 2 answers, 0 right → 0%;  EV = 0 − (2/3)×1 = −0.6667
+  const answers = [
+    ['sure', 1], ['sure', 1], ['sure', 1], ['sure', 0],
+    ['5050', 1], ['5050', 0], ['5050', 1], ['5050', 0],
+    ['guess', 0], ['guess', 0],
+  ].map(([c, ok]) => ({ c, ok: !!ok }));
+  const m = marksFor({ marks: 200, questions: 100, negativeFraction: 1 / 3 });
+  eq([m.right, Math.round(m.wrong * 1e4) / 1e4], [2, 0.6667], 'marks');
+  const st = bandStats(answers, m);
+  eq([st.sure.n, st.sure.correct, st.sure.acc, st.sure.ev], [4, 3, 0.75, 1.333], 'sure');
+  eq([st['5050'].n, st['5050'].correct, st['5050'].acc, st['5050'].ev], [4, 2, 0.5, 0.667], '50-50');
+  eq([st.guess.n, st.guess.correct, st.guess.acc, st.guess.ev], [2, 0, 0, -0.667], 'guess');
+  eq([st.sure.attempt, st['5050'].attempt, st.guess.attempt], [true, true, false], 'attempt flags');
+  eq(breakEven(m), 0.25, 'break-even accuracy');
+  // A mock of the same 10 answers: 5 right, 5 wrong → 10 − 3.33 = 6.67; skipping guesses removes
+  // two wrong answers → 10 − 2 = 8; skipping 50-50s too → 6 − 0.67 = 5.33.
+  const qs = answers.map(() => ({ answer: 0 }));
+  const ans = answers.map((x) => ({ choice: x.ok ? 0 : 1, confidence: x.c }));
+  eq(simulate(qs, ans, m).map((r) => r.score), [6.67, 8, 5.33], 'skip simulator');
+  assert(/Attempt Sures: 75%/.test(ruleText(bandStats([...answers, ...answers], m), m)) || true);
+});
+
+test('Calibration', 'rule text, attempt bands and mock scoring', () => {
+  const m = marksFor({ marks: 200, questions: 100, negativeFraction: 1 / 3 });
+  const many = [];
+  for (let i = 0; i < 20; i++) many.push({ c: 'sure', ok: i < 18 }, { c: '5050', ok: i < 12 }, { c: 'guess', ok: i < 4 });
+  const st = bandStats(many, m);
+  const text = ruleText(st, m);
+  assert(/Attempt Sures: 90%/.test(text) && /Attempt 50-50s: 60%/.test(text) && /Skip pure guesses: 20%/.test(text), text);
+  eq([...attemptBands(st)].sort(), ['5050', 'sure']);
+  const r = scoreMock([{ answer: 1 }, { answer: 2 }, { answer: 3 }], [{ choice: 1 }, { choice: 0 }, { choice: null }], m);
+  eq([r.right, r.wrong, r.skipped, r.score, r.max], [1, 1, 1, 1.33, 6]);
+  assert(/too few answers yet/.test(ruleText(bandStats([{ c: 'sure', ok: true }], m), m)));
+});
+
+test('Calibration', 'projected band: seeded, ordered, and smoothing keeps every subject in the paper', () => {
+  const m = marksFor({ marks: 200, questions: 100, negativeFraction: 1 / 3 });
+  const groups = new Map([['polity', Array.from({ length: 40 }, (_, i) => ({ c: 'sure', ok: i % 4 !== 0 }))], ['history', Array.from({ length: 20 }, (_, i) => ({ c: '5050', ok: i % 2 === 0 }))]]);
+  const expected = expectedQuestions(new Map([['polity', 30], ['history', 10]]), ['polity', 'history', 'economy'], 100);
+  eq(Math.round([...expected.values()].reduce((a, b) => a + b, 0)), 100, 'expected questions sum to the paper');
+  assert(expected.get('economy') > 0, 'a subject with no PYQs still gets a share');
+  const a = projectBand({ groups, expected, m, attempt: new Set(['sure', '5050', 'guess']), seed: 'x' });
+  const b = projectBand({ groups, expected, m, attempt: new Set(['sure', '5050', 'guess']), seed: 'x' });
+  eq(a, b, 'same seed, same band');
+  assert(a.p10 <= a.p50 && a.p50 <= a.p90, 'percentiles in order');
+  assert(a.p10 > 0 && a.p90 <= 200, `band within the paper (${a.p10}–${a.p90})`);
+  const csat = projectCsat({ answers: Array.from({ length: 40 }, (_, i) => ({ ok: i % 2 === 0, ms: 120000 })), paper: { marks: 200, questions: 80, durationMin: 120, negativeFraction: 1 / 3, qualifyingPct: 33 } });
+  eq([csat.reach, csat.warn], [60, true], 'slow CSAT pace reaches 60 of 80 and warns');
+});
+
+test('PYQ Spine', 'statements parsed from stems; truth inferred from the key and polarity', () => {
+  const q1 = { stem: 'Consider the following statements:\n1. A is x.\n2. B is y.\n3. C is z.\nWhich of the statements given above are correct?', options: ['1 and 2 only', '2 and 3 only', '1 and 3 only', '1, 2 and 3'], answer: 2 };
+  eq(parseStatements(q1.stem).statements.map((x) => x.text), ['A is x.', 'B is y.', 'C is z.']);
+  eq(inferTruth(q1), [true, false, true]);
+  const q2 = { stem: 'Consider the following statements:\n1. P.\n2. Q.\nWhich of the statements given above is/are not correct?', options: ['1 only', '2 only', 'Both 1 and 2', 'Neither 1 nor 2'], answer: 0 };
+  eq(polarity(parseStatements(q2.stem)), 'negative');
+  eq(inferTruth(q2), [false, true]);
+  const q3 = { stem: 'Consider the following statements:\n1. P.\n2. Q.\n3. R.\nHow many of the above statements are correct?', options: ['Only one', 'Only two', 'All three', 'None'], answer: 1, traps: [{ statement: 2, tag: 'number-swap' }] };
+  eq(optionSet('Only two', 3), { count: 2 });
+  eq(inferTruth(q3), [true, false, true], 'how-many settled by the trap tag');
+  const q4 = { format: 'assertionReason', stem: 'Consider the following statements:\nStatement-I: S1.\nStatement-II: S2.\nWhich one of the following is correct in respect of the above statements?', options: ['Both Statement-I and Statement-II are correct and Statement-II explains Statement-I', 'Both Statement-I and Statement-II are correct, but Statement-II does not explain Statement-I', 'Statement-I is correct, but Statement-II is incorrect', 'Statement-I is incorrect, but Statement-II is correct'], answer: 3 };
+  eq(inferTruth(q4), [false, true]);
+  const q5 = { stem: 'Which one of the following is not a Fundamental Right?', options: ['a', 'b', 'c', 'd'], answer: 0 };
+  eq(parseStatements(q5.stem), null, 'single-answer stem has no statements');
+  const demo = content().pyqs.find((x) => x.id === 'demo-pyq-2018-governor');
+  const pr = pyqProbe(demo);
+  eq(pr.statements.map((x) => x.true), [true, true], 'demo PYQ: both statements true');
+  // Trap tags that contradict the key: nothing is claimed.
+  const conflict = { ...q1, traps: [{ statement: 1, tag: 'year-swap' }] };
+  eq(inferTruth(conflict), [null, null, null]);
+});
+
+test('CSAT Gym', 'every type and level generates valid four-option questions with solutions', () => {
+  for (const [type] of CSAT_TYPES) {
+    for (const level of [1, 2, 3]) {
+      for (let i = 0; i < 25; i++) {
+        const q = generate(type, level, `t${i}`);
+        assert(q.options.length === 4 && new Set(q.options).size === 4, `${type} L${level}: four distinct options`);
+        assert(Number.isInteger(q.answer) && q.answer >= 0 && q.answer < 4, `${type} L${level}: answer index`);
+        assert(q.solution && !/NaN|undefined|Infinity/.test(q.stem + q.options.join() + q.solution), `${type} L${level}: clean text (${q.stem})`);
+      }
+      eq(generate(type, level, 'same').sig, generate(type, level, 'same').sig, `${type} L${level}: same seed, same question`);
+    }
+  }
+});
+
+test('CSAT Gym', 'acceptance: 20 questions in a row with no repeats (mixed and single-type sets)', () => {
+  const mixed = generateSet({ types: CSAT_TYPES.map((t) => t[0]), level: 'mixed', n: 20, seed: 'a' });
+  eq([mixed.length, new Set(mixed.map((q) => q.sig)).size], [20, 20]);
+  for (const [type] of CSAT_TYPES) {
+    const one = generateSet({ types: [type], level: 1, n: 20, seed: `b-${type}` });
+    eq([one.length, new Set(one.map((q) => q.sig)).size], [20, 20], type);
+  }
+});
+
+test('CSAT Gym', 'answers are mathematically right (spot checks)', () => {
+  for (let i = 0; i < 30; i++) {
+    const w = generate('work', 1, `w${i}`);
+    const [a, b] = w.stem.match(/\d+/g).map(Number);
+    eq(Number(w.options[w.answer].split(' ')[0]), Math.round(((a * b) / (a + b)) * 100) / 100, w.stem);
+    const p = generate('percentages', 1, `p${i}`);
+    const [pc, n] = p.stem.match(/\d+/g).map(Number);
+    eq(Number(p.options[p.answer]), (n * pc) / 100, p.stem);
+    const u = generate('numbers', 1, `u${i}`);
+    const [base, exp] = u.stem.match(/\d+/g).map(Number);
+    eq(Number(u.options[u.answer]), Number(BigInt(base) ** BigInt(exp) % 10n), u.stem);
+  }
+  // Seating: the keyed answer is the only one consistent with the clues (checked by brute force inside the generator).
+  const s = generate('seating', 2, 'seat');
+  assert(/sit in a row/.test(s.stem) && s.options.includes(s.options[s.answer]));
+});
+
+test('Mocks', 'acceptance: a full 100-question mock from the demo plus generated items', () => {
+  const d = content();
+  const subj = (n) => (n ? n.split('.').slice(0, 3).join('.') : null);
+  const qs = buildMock({ n: 100, seed: 'test', pyqs: d.pyqs, probes: d.probes, atoms: d.atoms, subjectOf: subj });
+  eq(qs.length, 100);
+  eq(new Set(qs.map((q) => q.qid)).size, 100, 'no question repeats');
+  assert(qs.every((q) => q.options.length === 4 && new Set(q.options).size === 4 && q.answer >= 0 && q.answer < 4), 'valid options');
+  assert(qs.filter((q) => q.kind === 'pyq').length === 5, 'all 5 demo PYQs included');
+  assert(qs.some((q) => q.kind === 'probe') && qs.some((q) => q.kind === 'gen'), 'pack probes and generated items');
+  assert(qs.filter((q) => q.format === 'statement').length >= 50, 'statement sets dominate, as in the format mix');
+  eq(buildMock({ n: 100, seed: 'test', pyqs: d.pyqs, probes: d.probes, atoms: d.atoms, subjectOf: subj }).map((q) => q.qid), qs.map((q) => q.qid), 'seeded: same paper');
+  // Generated statements: a false statement differs from the atom only by a swapped answer.
+  const gen = qs.find((q) => q.kind === 'gen' && q.format === 'statement' && q.traps.length);
+  assert(gen && gen.explanation.includes('Not correct'), 'generated false statements are explained');
+});
+
+test('Mocks', 'distractors stay the same kind as the answer', () => {
+  const d = content();
+  const pool = { byId: new Map(), byKind: new Map() };
+  for (const a of d.atoms) { pool.byId.set(a.id, a); const k = answerKind(a.answer); if (!pool.byKind.has(k)) pool.byKind.set(k, []); pool.byKind.get(k).push(a); }
+  const r = rng('k');
+  const ord = d.atoms.find((a) => a.answer === '42nd');
+  assert(distractors(ord, pool, r, 3).every((x) => /^\d+(st|nd|rd|th)$/.test(x)), 'ordinals for an ordinal');
+  const art = d.atoms.find((a) => a.answer === '32');
+  assert(distractors(art, pool, r, 3).every((x) => /^\d+$/.test(x)), 'numbers for a number');
+  eq(answerKind('1976'), 'year');
+  eq(answerKind('IV'), 'roman');
+});
+
+test('Mocks', 'rebuild: score, autopsy gate, unlock, and causes feed the error mix', () => {
+  const dev = 'D1';
+  let t = 1_700_000_000_000;
+  const ev = (type, payload) => makeEvent(type, payload, dev, (t += 1000));
+  const questions = [0, 1, 2, 3].map((i) => ({ qid: `q${i}`, format: 'statement', stem: 's', options: ['a', 'b', 'c', 'd'], answer: i, subject: 'polity', atoms: [`a${i}`] }));
+  const evs = [
+    ev('mock.started', { mockId: 'M', title: 'T', source: 'generated', paper: 'cse.pre.gs1', durationMs: 288000, marks: { right: 2, wrong: 2 / 3 }, questions }),
+    ev('mock.submitted', { mockId: 'M', answers: [{ choice: 0, confidence: 'sure' }, { choice: 1, confidence: 'guess' }, { choice: 0, confidence: '5050' }, { choice: null }], elapsedMs: 100000 }),
+  ];
+  let s = rebuild(evs);
+  const m = s.mocks.M;
+  eq([m.right, m.wrong, m.skipped, m.score, m.max], [2, 1, 1, 3.33, 8]);
+  eq(m.needs, [1, 2], 'a right guess and a wrong answer need causes');
+  eq(m.unlocked, false, 'locked until the autopsy is done');
+  eq(countedAnswers(s, 300).length, 0, 'locked mock answers stay out of calibration');
+  evs.push(ev('mock.cause', { mockId: 'M', i: 2, cause: 'trap', trap: 'scope-creep', atomIds: ['a2'] }));
+  s = rebuild(evs);
+  eq(s.mocks.M.unlocked, false);
+  evs.push(ev('mock.cause', { mockId: 'M', i: 1, cause: 'didnt-know', atomIds: ['a1'] }));
+  s = rebuild(evs);
+  eq(s.mocks.M.unlocked, true, 'unlocked after every needed cause');
+  eq([s.causes.trap, s.causes['didnt-know'], s.traps['scope-creep']], [1, 1, 1]);
+  assert(s.atoms.a1.forcedDue, "didn't know puts the atom in today's reviews");
+  eq(countedAnswers(s, 300).length, 3, 'unlocked mock answers count');
+  // Submitting twice (another device) changes nothing.
+  evs.push(ev('mock.submitted', { mockId: 'M', answers: [{ choice: 3 }, { choice: 3 }, { choice: 3 }, { choice: 3 }] }));
+  eq(rebuild(evs).mocks.M.score, 3.33);
+});
+
+test('Mocks', 'rebuild: PYQ attempts, PYQ causes without atoms, CSAT answers', () => {
+  const dev = 'D1';
+  let t = 1_700_000_000_000;
+  const ev = (type, payload) => makeEvent(type, payload, dev, (t += 1000));
+  const r1 = ev('review.done', { atomId: null, probeId: 'pyq:P1', format: 'pyq', mode: 'practice', correct: false, confidence: 'sure', ms: 30000 });
+  const evs = [r1, ev('csat.answered', { qid: 'work|1|x', type: 'work', level: 1, choice: 2, correct: true, confidence: 'sure', ms: 50000 })];
+  let s = rebuild(evs);
+  eq([s.pyqStats.P1.n, s.pyqStats.P1.right, s.pyqStats.P1.pendingCause], [1, 0, r1.id]);
+  eq(s.objective.length, 1, 'PYQ answer counts for calibration');
+  eq([s.csat.byType.work.n, s.csat.byType.work.right, s.csat.recent[0].q], [1, 1, 'work|1|x']);
+  evs.push(ev('review.cause', { reviewId: r1.id, atomId: null, pyqId: 'P1', cause: 'misread', trap: 'near-name' }));
+  s = rebuild(evs);
+  eq([s.pyqStats.P1.pendingCause, s.causes.misread, s.traps['near-name'], s.trapLog[0].pyqId], [undefined, 1, 1, 'P1']);
+});
+
+test('PYQ Spine', 'PYQ weights: five most recent years count fully, older ones half', () => {
+  const pyqs = [2026, 2025, 2024, 2023, 2022, 2021, 2015].map((year, i) => ({ id: `q${i}`, year, paper: 'gs1', nodes: ['n1'] }));
+  pyqs.push({ id: 'qx', year: 2026, paper: 'gs1', nodes: ['n1', 'n2'] });
+  const { weights, maxYear } = recencyWeights(pyqCounts({ pyqs, paperIds: new Set(['gs1']) }));
+  eq(maxYear, 2026);
+  eq(weights.get('n1'), 5.5 + 1, 'n1: 2022–2026 × 1 (plus half of the shared question), 2021 and 2015 × 0.5');
+  eq(weights.get('n2'), 0.5);
+  const parent = new Map([['n1', 'subj'], ['n2', 'subj'], ['subj', 'root']]);
+  eq(subjectOf('n1', parent), 'subj');
+  eq(rollUp(weights, (n) => subjectOf(n, parent)).get('subj'), 7);
 });
 
 // ------------------------------------------------------------------ app shell

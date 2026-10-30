@@ -3,4 +3,4 @@ export const APP_VERSION = '1.3.1';
 export const SCHEMA_VERSION = 1;          // SMRITI SCHEMA v1 (content packs)
 export const BACKUP_FORMAT = 'smriti-backup';
 export const BACKUP_FORMAT_VERSION = 1;   // shape of the export file
-export const STATE_VERSION = 2;           // shape of the rebuilt state; bump to force a rebuild
+export const STATE_VERSION = 3;           // shape of the rebuilt state; bump to force a rebuild

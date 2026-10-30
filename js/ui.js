@@ -38,6 +38,9 @@ const ICONS = {
   book: '<path d="M4 5.5C4 4.7 4.7 4 5.5 4H11v16H5.5c-.8 0-1.5-.7-1.5-1.5zM20 5.5c0-.8-.7-1.5-1.5-1.5H13v16h5.5c.8 0 1.5-.7 1.5-1.5z"/>',
   search: '<circle cx="10.5" cy="10.5" r="6.5" fill="none"/><path d="M15.5 15.5L21 21" fill="none"/>',
   close: '<path d="M6 6l12 12M18 6L6 18" fill="none"/>',
+  labs: '<path d="M9 3h6M10 3v6.5L4.6 18.2A1.8 1.8 0 006.1 21h11.8a1.8 1.8 0 001.5-2.8L14 9.5V3"/><path d="M7.2 15h9.6" fill="none"/>',
+  progress: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2" fill="none"/>',
+  more: '<circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/>',
 };
 
 export function icon(name, cls = 'icon') {

@@ -19,7 +19,7 @@ export const EVENT_TYPES = [
   'atom.rebuilt',      // {atomId, kind: mnemonic|split|contrast, text?, into?, with?} leech rebuilt
   'atoms.scheduled',   // {atomIds, reason} due today (missed recall, dropped in notes)
   'review.done',       // {atomId, probeId, format, mode, correct, confidence, ms, target, suggested, rating, sessionId, response}
-  'review.cause',      // {reviewId, atomId, cause, other?, trap?} error cause of a miss
+  'review.cause',      // {reviewId, atomId | pyqId, cause, other?, trap?} error cause of a miss
   'confusion.hit',     // {a, b, via, reviewId?} one atom mistaken for another
   'contrast.done',     // {pair, correct, confidence, ms, sessionId}
   'session.started',   // {sessionId, kind, nodeId?}
@@ -37,6 +37,11 @@ export const EVENT_TYPES = [
   'source.renamed',    // {sourceId, title}
   'source.mapped',     // {sourceId, nodeId, from, to} (from null removes)
   'source.linked',     // {sourceId, packId, offset} pack pages ↔ PDF pages
+  'mock.started',      // {mockId, title, source, paper, durationMs, marks, questions[]} snapshot of the paper
+  'mock.submitted',    // {mockId, answers: [{choice, confidence, ms, marked}], elapsedMs, auto}
+  'mock.cause',        // {mockId, i, cause, trap?, other?, atomIds} autopsy tag for one question
+  'mock.discarded',    // {mockId} abandoned before submitting
+  'csat.answered',     // {qid, type, level, choice, correct, confidence, ms, sessionId, source}
   'settings.set',      // {key, value} synced settings (active profile, budget, study limits)
   'profile.set',       // {profileId, path, value} profile override; value null removes it
   'backup.exported',   // {deviceName, fileName, events}

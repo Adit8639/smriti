@@ -137,9 +137,10 @@ export function evaluate(probe, r) {
       const ok = probe.statements.every((s, i) => r.marks && r.marks[i] === s.true);
       return { correct: ok, partial: false };
     }
+    case 'pyq':
     case 'statement': {
       const correct = r.choice === probe.answer;
-      const wrongMarks = (probe.statements || []).some((s, i) => r.marks && r.marks[i] !== undefined && r.marks[i] !== s.true);
+      const wrongMarks = (probe.statements || []).some((s, i) => (s.true === true || s.true === false) && r.marks && r.marks[i] !== undefined && r.marks[i] !== s.true);
       return { correct, partial: correct && wrongMarks };
     }
     case 'match':

@@ -19,6 +19,12 @@ import * as notes from './view-notes.js';
 import * as booklet from './view-booklet.js';
 import * as sources from './view-sources.js';
 import * as reader from './view-reader.js';
+import * as labs from './view-labs.js';
+import * as lab from './view-lab.js';
+import * as mock from './view-mock.js';
+import * as csat from './view-csat.js';
+import * as progress from './view-progress.js';
+import * as more from './view-more.js';
 
 const ROUTES = {
   today: { view: today, title: 'Today', nav: 'today' },
@@ -32,18 +38,24 @@ const ROUTES = {
   learn: { view: learn, title: 'Learn Loop', nav: 'library' },
   notes: { view: notes, title: 'Notes', nav: 'library' },
   booklet: { view: booklet, title: 'Booklet', nav: 'library' },
-  sources: { view: sources, title: 'Sources', nav: 'sources' },
-  reader: { view: reader, title: 'Reader', nav: 'sources' },
-  data: { view: dataView, title: 'Data', nav: 'data' },
-  settings: { view: settings, title: 'Settings', nav: 'settings' },
+  labs: { view: labs, title: 'Labs', nav: 'labs' },
+  lab: { view: lab, title: 'Prelims Lab', nav: 'labs' },
+  mock: { view: mock, title: 'Mock', nav: 'labs' },
+  csat: { view: csat, title: 'CSAT Gym', nav: 'labs' },
+  progress: { view: progress, title: 'Progress', nav: 'progress' },
+  more: { view: more, title: 'More', nav: 'more' },
+  sources: { view: sources, title: 'Sources', nav: 'more' },
+  reader: { view: reader, title: 'Reader', nav: 'more' },
+  data: { view: dataView, title: 'Data', nav: 'more' },
+  settings: { view: settings, title: 'Settings', nav: 'more' },
 };
 
 const NAV = [
   ['today', 'Today', 'today'],
   ['library', 'Library', 'library'],
-  ['sources', 'Sources', 'book'],
-  ['data', 'Data', 'data'],
-  ['settings', 'Settings', 'settings'],
+  ['labs', 'Labs', 'labs'],
+  ['progress', 'Progress', 'progress'],
+  ['more', 'More', 'more'],
 ];
 
 const BACKUP_DAYS = 7;

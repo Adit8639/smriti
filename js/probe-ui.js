@@ -42,7 +42,9 @@ function optionsBlock(probe, st, notify, disabledFn) {
 }
 
 // ---- true / false marking -------------------------------------------------------------
-function statementsBlock(statements, st, notify, { labels = true } = {}) {
+const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI'];
+
+function statementsBlock(statements, st, notify, { labels = true, numbering = 'arabic' } = {}) {
   st.marks = st.marks || statements.map(() => undefined);
   const rows = statements.map((s, i) => {
     const set = (v) => {
@@ -56,7 +58,8 @@ function statementsBlock(statements, st, notify, { labels = true } = {}) {
     const f = h('button', { class: 'tf f', type: 'button', 'aria-pressed': 'false', 'aria-label': `Statement ${i + 1} false`, onclick: () => set(false) }, 'False');
     const why = h('p', { class: 'stmt-why small', hidden: true });
     const row = h('div', { class: 'stmt', 'data-nav': '', tabindex: '0' },
-      h('p', { class: 'stmt-text' }, labels ? h('strong', { text: `${i + 1}. ` }) : null, s.text.replace(/^Statement-(I|II):\s*/, (m) => m)),
+      h('p', { class: 'stmt-text' }, labels && numbering !== 'statement' ? h('strong', { text: `${numbering === 'roman' ? ROMAN[i] : i + 1}. ` }) : null,
+        numbering === 'statement' ? h('strong', { text: `Statement-${ROMAN[i]}: ` }) : null, s.text),
       h('div', { class: 'tf-row' }, t, f), why);
     return { row, set, why, t, f };
   });
@@ -73,6 +76,13 @@ function statementsBlock(statements, st, notify, { labels = true } = {}) {
         const s = statements[i];
         r.t.disabled = true;
         r.f.disabled = true;
+        if (s.true !== true && s.true !== false) {
+          // The answer key does not settle this statement on its own.
+          r.row.classList.add('unknown');
+          r.why.hidden = !s.trap;
+          r.why.textContent = s.trap ? `Trap tag: ${s.trap.replace(/-/g, ' ')}.` : '';
+          return;
+        }
         const ok = st.marks[i] === s.true;
         r.row.classList.add(ok ? 'right' : 'wrong');
         r.why.hidden = false;
@@ -252,6 +262,23 @@ export function mountProbe(container, probe, { seed = probe.id, onChange = () =>
       root.append(opts.el);
       break;
     }
+    case 'pyq': {
+      // Statements inside the stem become markable rows (elimination first), then options.
+      if (probe.statements && probe.parsed) {
+        if (probe.parsed.intro) root.append(h('div', { class: 'pv-stem pre' }, gapNodes(probe.parsed.intro)));
+        stmts = statementsBlock(probe.statements, st, () => { opts.setDisabled(!stmts.done()); notify(); }, { numbering: probe.parsed.numbering });
+        root.append(stmts.el);
+        if (probe.parsed.outro) root.append(h('p', { class: 'pv-stem pre', text: probe.parsed.outro }));
+        root.append(h('p', { class: 'small muted', text: 'Mark each statement true or false first; the options unlock after that.' }));
+        opts = optionsBlock(probe, st, notify, () => !stmts.done());
+        opts.setDisabled(true);
+      } else {
+        root.append(prompt(probe));
+        opts = optionsBlock(probe, st, notify);
+      }
+      root.append(opts.el);
+      break;
+    }
     case 'match':
     case 'contrast': {
       root.append(prompt(probe));
@@ -295,6 +322,7 @@ export function mountProbe(container, probe, { seed = probe.id, onChange = () =>
         case 'cloze': case 'qa': return true;
         case 'tf': return stmts.done();
         case 'statement': return stmts.done() && Number.isInteger(st.choice);
+        case 'pyq': return (!stmts || stmts.done()) && Number.isInteger(st.choice);
         case 'match': case 'contrast': return block ? block.done() : Number.isInteger(st.choice);
         case 'order': return block.done();
         case 'explain': return st.stage === 'check';
@@ -306,6 +334,7 @@ export function mountProbe(container, probe, { seed = probe.id, onChange = () =>
         case 'cloze': case 'qa': return { typed: (st.typed || '').trim() || null, self: st.self };
         case 'tf': return { marks: st.marks.slice() };
         case 'statement': return { marks: st.marks.slice(), choice: st.choice };
+        case 'pyq': return stmts ? { marks: st.marks.slice(), choice: st.choice } : { choice: st.choice };
         case 'match': case 'contrast': return block ? { pairing: st.pairing.slice() } : { choice: st.choice };
         case 'order': return { order: st.order.slice() };
         case 'explain': return { text: (st.text || '').slice(0, 4000), ticked: (st.ticked || []).slice() };
@@ -341,7 +370,7 @@ export function mountProbe(container, probe, { seed = probe.id, onChange = () =>
     },
     key(k) {
       if (st.revealed) return false;
-      if (opts && /^[a-d]$/.test(k) && (probe.format !== 'statement' || stmts.done())) { opts.pick(LETTERS.indexOf(k)); return true; }
+      if (opts && /^[a-d]$/.test(k) && (!stmts || stmts.done())) { opts.pick(LETTERS.indexOf(k)); return true; }
       if (stmts && (k === 't' || k === 'f')) { stmts.markNext(k === 't'); return true; }
       if (block && block.keyPick) return block.keyPick(k);
       return false;
@@ -354,18 +383,5 @@ export function mountProbe(container, probe, { seed = probe.id, onChange = () =>
   return ctl;
 }
 
-export function pyqProbe(q) {
-  return {
-    id: `pyq:${q.id}`,
-    format: 'pyq',
-    atoms: q.atoms || [],
-    stem: q.stem,
-    options: q.options,
-    answer: q.answer,
-    explanation: q.elimination || '',
-    difficulty: 2,
-    pyq: q,
-  };
-}
-
+export { pyqProbe } from './pyq.js';
 export { hasGap };

@@ -35,7 +35,7 @@ export function causeSheet({ atom, defaultTrap = null, suggestions = [] }) {
     const choose = async (cause) => {
       if (done) return;
       if (cause === 'confused') {
-        const other = await atomPicker({ title: 'Confused it with which atom?', exclude: [atom.id], suggestions });
+        const other = await atomPicker({ title: 'Confused it with which atom?', exclude: atom ? [atom.id] : [], suggestions });
         if (other) finish({ cause, other: other.id });
         return;
       }

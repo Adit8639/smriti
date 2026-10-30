@@ -1,6 +1,6 @@
 {
   "id": "cse-2028",
-  "version": 1,
+  "version": 2,
   "exam": "cse",
   "name": "UPSC CSE 2028",
   "subtitle": "Optional: Anthropology (Papers I and II)",
@@ -62,7 +62,12 @@
         "howMany": 2
       },
       "wordLimits": null,
-      "minutesPerAnswer": null
+      "minutesPerAnswer": null,
+      "syllabusRoots": [
+        "cse.gs1",
+        "cse.gs2",
+        "cse.gs3"
+      ]
     },
     {
       "id": "cse.pre.csat",
@@ -76,7 +81,10 @@
       "qualifyingPct": 33,
       "formatMix": null,
       "wordLimits": null,
-      "minutesPerAnswer": null
+      "minutesPerAnswer": null,
+      "syllabusRoots": [
+        "cse.csat"
+      ]
     },
     {
       "id": "cse.mains.essay",
