@@ -4,7 +4,10 @@
 import { h, toast, sheet, confirmSheet, download, shareFile, canShareFiles, readFiles, issueList } from './ui.js';
 import { app, allNodes, activeProfile, applyDerived, workerCtx, setSetting, getSetting } from './store.js';
 import { call } from './data.js';
-import { nodeIndex } from './tree.js';
+import { nodeIndex, inProfileScope } from './tree.js';
+import { ankiTsv } from './anki.js';
+import { quarantineStatus } from './rebuild.js';
+import { sourceLabel } from './view-library.js';
 import * as clock from './clock.js';
 import { formatDate, formatDateTime, localDate, daysBetween, plural, slug } from './util.js';
 import { CONTENT_STORES } from './db.js';
@@ -299,6 +302,39 @@ export async function render() {
           try { await navigator.clipboard.writeText(idx.text); toast('Node index copied.', { kind: 'ok' }); } catch (e) { toast(`Copy failed: ${e.message}`, { kind: 'error' }); }
         },
       }, 'Copy'))));
+
+  // Anki export
+  const profile = activeProfile();
+  const nodesAll = allNodes();
+  const subjects = [...nodesAll.values()].filter((n) => inProfileScope(n, profile) && (n.parent === null || (nodesAll.get(n.parent) && nodesAll.get(n.parent).parent === null)));
+  const picks = subjects.map((n) => ({ id: n.id, cb: h('input', { type: 'checkbox' }), label: `${n.parent ? '— ' : ''}${n.title}` }));
+  const scopeBox = h('details', { class: 'field' }, h('summary', { text: 'Topics (none ticked = all atoms)' }),
+    h('div', { class: 'checklist' }, picks.map((x) => h('label', { class: 'check-row' }, x.cb, h('span', { text: x.label })))));
+  const inclQ = h('input', { type: 'checkbox' });
+  root.append(h('section', { class: 'card' },
+    h('h2', { text: 'Export to Anki' }),
+    h('p', { class: 'small', text: 'A tab-separated file AnkiDroid and Anki import directly (File → Import): Front, Back, Tags, Source. Tags follow the syllabus, e.g. smriti::cse::gs2::polity.' }),
+    scopeBox,
+    h('label', { class: 'check' }, inclQ, ' Include atoms still in Quarantine'),
+    h('div', { class: 'button-row' }, h('button', {
+      class: 'btn primary', type: 'button',
+      onclick: async () => {
+        const chosen = picks.filter((x) => x.cb.checked).map((x) => x.id);
+        const atoms = await call('atoms.under', { nodeIds: chosen });
+        const packs = new Map((await app.db.getAll('packs')).map((p) => [p.id, p]));
+        const list = atoms.filter((a) => {
+          const q = quarantineStatus(a, app.state);
+          const rec = app.state.atoms[a.id];
+          if (rec && rec.retired) return false;
+          return q === 'clear' || q === 'approved' || (inclQ.checked && q === 'quarantined');
+        });
+        if (!list.length) { toast('No atoms to export.', { kind: 'warn' }); return; }
+        const text = ankiTsv(list, { sourceLabel: (a) => sourceLabel(a, packs, new Map()) });
+        const name = `smriti-anki-${chosen.length === 1 ? slug(chosen[0]) : chosen.length ? `${chosen.length}-topics` : 'all'}-${localDate(clock.now())}.txt`;
+        download(name, text, 'text/plain;charset=utf-8');
+        toast(`Exported ${plural(list.length, 'atom')} to ${name}.`, { kind: 'ok', ms: 6000 });
+      },
+    }, 'Export for Anki'))));
 
   // The two main actions again, within thumb reach above the navigation bar.
   root.append(h('div', { class: 'dock', role: 'group', 'aria-label': 'Quick actions' },

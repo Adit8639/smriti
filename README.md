@@ -4,7 +4,7 @@ An offline-first active-recall system for UPSC CSE (default profile: CSE 2028, o
 
 The engine holds no study content. Everything you study arrives as validated **content packs** (JSON files made with the Forge prompts in the build kit). Your packs, notes and progress stay in each device's browser storage. The hosted site holds only the code.
 
-Build status: **Phase 1 (Foundation)**. See [`docs/phase-1.md`](docs/phase-1.md) for what is in it, the test script and its limits.
+Build status: **Phases 1–3** (Foundation, Recall Engine, Learn Loop/Reader/Notes). What each phase contains: [`docs/phase-1.md`](docs/phase-1.md), [`docs/phase-2.md`](docs/phase-2.md), [`docs/phase-3.md`](docs/phase-3.md). One test script for all three: [`docs/TESTING.md`](docs/TESTING.md).
 
 ## Run it
 
@@ -28,13 +28,20 @@ Then open `http://localhost:8000/`. `localhost` counts as secure, so offline mod
 | `sw.js` | Service worker: versioned, cache-first shell. Bump `VERSION` (and `js/version.js`) on every release |
 | `manifest.webmanifest`, `icons/` | Install metadata |
 | `js/` | One ES module per concern (see below) |
-| `vendor/minisearch/` | MiniSearch 7.2.0, MIT licence (search) |
+| `vendor/` | MiniSearch 7.2.0 (search, MIT), ts-fsrs 5.4.2 (FSRS scheduling, MIT), pdf.js 6.4.299 (PDF text and pages, Apache-2.0); see `vendor/README.md` |
 | `profiles/` | Exam profiles as data: dates, phases, papers, starter syllabus |
-| `packs/demo/` | Demo packs: 12 Polity topics; 30 atoms, 15 probes (every format), 5 PYQs, 3 CA items, 1 model answer, 1 note |
+| `packs/demo/` | Demo packs: 12 Polity topics; 30 atoms, 15 probes (every format), 5 PYQs, 3 CA items, 1 model answer, 1 note; and `demo-source.pdf`, the 40-page Demo Source the atoms cite |
 | `tests/` | In-browser self-tests |
 | `docs/` | Phase notes and test scripts |
 
-`js/`: `db` (IndexedDB wrapper) · `ulid` · `clock` (app time and test clock) · `events` (event log) · `rebuild` (pure state rebuild) · `schema` (pack validator) · `packs` (import dry-run and commit, uninstall) · `backup` (export and merge-import) · `integrity` (orphans, counts) · `derived` (cache rebuild) · `profiles` · `tree` · `search` · `worker` (data worker) · `data` (worker client) · `store` (page state, event append) · `pwa` · `ui` · `app` (boot, routes) · `view-*` (screens).
+`js/` modules:
+
+- **Storage and events:** `db` (IndexedDB wrapper) · `ulid` · `clock` (app time and test clock) · `events` · `rebuild` (pure state rebuild) · `derived` (caches) · `store` (page state, event append) · `worker` (data worker) · `data` (worker client)
+- **Content:** `schema` (pack validator) · `packs` · `backup` · `integrity` · `profiles` · `tree` · `search`
+- **Recall engine:** `fsrs` (ts-fsrs wrapper) · `probes` (chooser, answer checking, rating rule) · `cloze` · `confusion` · `queue` · `study` · `session` (review player) · `probe-ui` (renderers) · `sheets` (cause, pickers, quick add) · `anki`
+- **Learning:** `pdf` · `sources` · `links` · `dictate`
+- **Shell:** `pwa` · `ui` · `app` (boot, routes)
+- **Screens:** `view-today`, `view-review`, `view-leech`, `view-library`, `view-learn`, `view-notes`, `view-booklet`, `view-sources`, `view-reader`, `view-quarantine`, `view-data`, `view-settings`
 
 ## How data works
 
@@ -42,6 +49,9 @@ Then open `http://localhost:8000/`. `localhost` counts as secure, so offline mod
 - **Backup** writes all 13 stores to `smriti-backup-<device>-<date>.json`. **Import merges:** events are unioned by id, and content is upserted only when the incoming pack version is higher. Import never deletes, and caches are rebuilt afterwards. Importing the same file twice changes nothing. The `settings` and `cache` stores are exported but not merged, because they are device-local or derived.
 - **Sync two devices:** export on one and import on the other, then the reverse. Both then hold the same events and the same state.
 - **Quarantine:** atoms with `origin: "model"` or `verify: true` wait until you approve them. An approval holds only for the exact content approved: if a pack update changes the atom, it returns to Quarantine.
+- **Reviews:** every answer is a `review.done` event. Its time, confidence, suggested and final rating and error cause go in follow-up `review.cause` events. FSRS card state is replayed from these, so both devices compute the same schedule.
+- **Your own atoms** (quick add, Reader, splits) are `atom.created` events. The worker materialises them into the atoms store as pack `@self`, and a backup carries them as events.
+- **Sources:** a PDF or its page text stays on the device that added it. Titles, page counts, topic mappings and pack links travel as events. The same file added on another device gets the same id (from its SHA-256) and links up.
 
 ## Schema notes (SMRITI SCHEMA v1 as implemented)
 

@@ -5,7 +5,7 @@ import { openDB } from './db.js';
 import { ulid } from './ulid.js';
 import * as clock from './clock.js';
 import { makeEvent } from './events.js';
-import { applyEvent, sortsAfterLast, initialState } from './rebuild.js';
+import { applyInPlace, sortsAfterLast, initialState } from './rebuild.js';
 import { STATE_VERSION } from './version.js';
 import { effectiveProfile, profileContext, DEFAULT_PROFILE_ID } from './profiles.js';
 import { call } from './data.js';
@@ -20,6 +20,7 @@ export const app = {
   state: initialState(),
   derived: { integrity: null, nodeCounts: {}, subtreeCounts: {}, summary: null },
   packNodes: [],
+  synced: Promise.resolve(),
 };
 
 const listeners = new Set();
@@ -60,8 +61,11 @@ export async function loadProfiles() {
   app.ctx = profileContext(app.profiles);
 }
 
+// Pack topics in each pack's authored order (the store returns them sorted by id).
+export const byAuthoredOrder = (a, b) => (a._pack < b._pack ? -1 : a._pack > b._pack ? 1 : (a._i ?? 1e9) - (b._i ?? 1e9) || (a.id < b.id ? -1 : 1));
+
 export async function loadNodes() {
-  app.packNodes = await app.db.getAll('nodes');
+  app.packNodes = (await app.db.getAll('nodes')).sort(byAuthoredOrder);
 }
 
 // Events only ever grow, so a worker result with fewer events than the page already has is
@@ -80,15 +84,19 @@ export function setDerived(d) {
   }
 }
 
-// Uses the cached state when it matches the event log; otherwise asks the worker to rebuild.
+// Shows the cached state at once; if the event log has moved on, the worker catches up in
+// the background (applying only the newer events) and app.synced resolves when it has.
 export async function loadDerived() {
   const [st, integ, counts, sub, summary] = await Promise.all(['state', 'integrity', 'nodeCounts', 'subtreeCounts', 'summary'].map((k) => app.db.get('cache', k)));
   const evCount = await app.db.count('events');
-  if (!st || !summary || !integ || !counts || !sub || st.value.v !== STATE_VERSION || st.value.count !== evCount) {
+  const usable = st && summary && integ && counts && sub && st.value.v === STATE_VERSION;
+  if (!usable) {
     setDerived(await call('refresh'));
-  } else {
-    setDerived({ state: st.value, integrity: integ.value, nodeCounts: counts.value, subtreeCounts: sub.value, summary: summary.value });
+    app.synced = Promise.resolve();
+    return;
   }
+  setDerived({ state: st.value, integrity: integ.value, nodeCounts: counts.value, subtreeCounts: sub.value, summary: summary.value });
+  app.synced = st.value.count === evCount ? Promise.resolve() : call('refresh').then(setDerived);
 }
 
 // After the worker changed content: reload pack nodes, then publish the new caches.
@@ -111,37 +119,52 @@ export function activeProfileId() {
   return app.profiles[0] ? app.profiles[0].id : null;
 }
 
+// Memoised: rebuilt only when the profile or its overrides change (it is read per card).
+let profileMemo = { key: null, value: null };
 export function activeProfile() {
   const id = activeProfileId();
   const base = app.profiles.find((p) => p.id === id);
-  return base ? effectiveProfile(base, app.state.profileEdits[id]) : null;
+  if (!base) return null;
+  const edits = app.state.profileEdits[id];
+  const key = `${id}@${base.version}|${edits ? JSON.stringify(edits) : ''}`;
+  if (profileMemo.key !== key || profileMemo.base !== base) profileMemo = { key, base, value: effectiveProfile(base, edits) };
+  return profileMemo.value;
 }
 
 export const workerCtx = () => ({ deviceId: app.device.deviceId, deviceName: app.device.name, now: clock.now() });
 
-// Appends one event and updates the cached state in the same transaction. Appends are
-// serialised so rapid taps can never apply to a stale state.
+// Appends events durably, then applies them to the page's state in place: one small write
+// per action, so reviewing never stalls the screen. Appends are serialised so rapid taps
+// can never apply to a stale state. The worker persists the state cache in the background.
 let chain = Promise.resolve();
-export function appendEvent(type, payload) {
+let sinceFlush = 0;
+export function appendEvents(list) {
   const run = async () => {
-    const ev = makeEvent(type, payload, app.device.deviceId, clock.now());
-    if (!sortsAfterLast(app.state, ev)) {
-      // Only after the test clock moved back: the event lands mid-log, so the worker
+    const evs = list.map(([type, payload]) => makeEvent(type, payload, app.device.deviceId, clock.now()));
+    const inOrder = sortsAfterLast(app.state, evs[0]);
+    await app.db.tx('events', 'readwrite', (s) => { for (const e of evs) s.events.put(e); }, 'strict');
+    if (inOrder) {
+      for (const e of evs) applyInPlace(app.state, e);
+      emit('state');
+      sinceFlush += evs.length;
+      if (sinceFlush >= 25) flushState();
+    } else {
+      // Only after the test clock moved back: the events land mid-log, so the worker
       // replays the whole log instead of the page.
-      await app.db.put('events', ev, 'strict');
       setDerived(await call('refresh'));
-      return ev;
     }
-    const next = applyEvent(app.state, ev);
-    await app.db.tx(['events', 'cache'], 'readwrite', (s) => {
-      s.events.put(ev);
-      s.cache.put({ key: 'state', value: next });
-    }, 'strict');
-    app.state = next;
-    emit('state');
-    return ev;
+    return evs;
   };
   const p = chain.then(run, run);
   chain = p.catch(() => {});
   return p;
+}
+
+export const appendEvent = (type, payload) => appendEvents([[type, payload]]).then((evs) => evs[0]);
+
+// Asks the worker to write its (synced) state to the cache, e.g. when the app goes to the
+// background, so the next start needs no catch-up.
+export function flushState() {
+  sinceFlush = 0;
+  return call('state.flush').catch(() => {});
 }

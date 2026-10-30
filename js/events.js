@@ -14,7 +14,30 @@ export const EVENT_TYPES = [
   'atom.approved',     // {atomId, hash} released from Quarantine
   'atom.discarded',    // {atomId, hash} rejected in Quarantine
   'atom.restored',     // {atomId} back into Quarantine
-  'settings.set',      // {key, value} synced settings (active profile, weekday budget)
+  'atom.created',      // {atom} made on a device: quick add, Reader, split (origin "self")
+  'atom.edited',       // {atomId, fields} change to a self-made atom
+  'atom.rebuilt',      // {atomId, kind: mnemonic|split|contrast, text?, into?, with?} leech rebuilt
+  'atoms.scheduled',   // {atomIds, reason} due today (missed recall, dropped in notes)
+  'review.done',       // {atomId, probeId, format, mode, correct, confidence, ms, target, suggested, rating, sessionId, response}
+  'review.cause',      // {reviewId, atomId, cause, other?, trap?} error cause of a miss
+  'confusion.hit',     // {a, b, via, reviewId?} one atom mistaken for another
+  'contrast.done',     // {pair, correct, confidence, ms, sessionId}
+  'session.started',   // {sessionId, kind, nodeId?}
+  'session.active',    // {sessionId, ms} answer-producing time outside reviews (writing, recall)
+  'session.ended',     // {sessionId}
+  'learn.started',     // {loopId, nodeId, sessionId}
+  'learn.step',        // {loopId, step, pretest?, readMs?, probes?}
+  'learn.recall',      // {loopId, nodeId, text, ticked, missed, total, pct}
+  'learn.output',      // {loopId, nodeId, question, skeleton, ms}
+  'learn.completed',   // {loopId, nodeId}
+  'learn.discarded',   // {loopId}
+  'note.saved',        // {nodeId, level, text, words, sourceIds}
+  'note.dropped',      // {nodeId, level, noteId, dropped}
+  'source.added',      // {sourceId, title, pages, bytes, fileName}
+  'source.renamed',    // {sourceId, title}
+  'source.mapped',     // {sourceId, nodeId, from, to} (from null removes)
+  'source.linked',     // {sourceId, packId, offset} pack pages ↔ PDF pages
+  'settings.set',      // {key, value} synced settings (active profile, budget, study limits)
   'profile.set',       // {profileId, path, value} profile override; value null removes it
   'backup.exported',   // {deviceName, fileName, events}
 ];

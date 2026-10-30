@@ -176,7 +176,8 @@ export async function commitPackPlans(db, entries, { deviceId, now }) {
     await db.tx([...CONTENT_STORES, 'packs', 'events'], 'readwrite', (s) => {
       s.packs.put({ ...e.pack, _v: e.version, _installedAt: prev ? prev._installedAt : ts, _updatedAt: ts, _file: e.fileName });
       for (const store of CONTENT_STORES) {
-        for (const item of e.items[store]) s[store].put({ ...item, _pack: e.packId, _v: e.version });
+        // _i keeps the pack's authored order (syllabus order for topics).
+        e.items[store].forEach((item, i) => s[store].put({ ...item, _pack: e.packId, _v: e.version, _i: i }));
         for (const id of e.removed[store] || []) s[store].delete(id);
       }
       s.events.put(ev);

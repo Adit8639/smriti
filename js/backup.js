@@ -10,9 +10,12 @@ import { validatePack, COLLECTIONS } from './schema.js';
 import { validateProfile, profileContext } from './profiles.js';
 import { isObj, sameContent, stableStringify, stripMeta, describeJsonError, localDate, slug, formatDate } from './util.js';
 
-// Device-local or derived stores: exported for completeness, never merged.
-export const NOT_MERGED = ['settings', 'cache'];
-const MERGED = ['events', 'packs', 'profiles', 'sources', ...CONTENT_STORES];
+// Device-local or derived stores: exported for completeness, never merged. Sources hold
+// this device's PDF or page text; their titles and topic links travel as events.
+export const NOT_MERGED = ['settings', 'cache', 'sources'];
+const MERGED = ['events', 'packs', 'profiles', ...CONTENT_STORES];
+// Self-made atoms are materialised from atom.created events, so the events carry them.
+const SELF_PACK = '@self';
 const MAX_ERRORS = 50;
 
 function snapshot(db) {
@@ -33,6 +36,8 @@ export async function exportBackup(db, { deviceId, deviceName, now }) {
   const ev = makeEvent('backup.exported', { deviceName, fileName, events: before + 1 }, deviceId, now);
   await db.put('events', ev, 'strict');
   const stores = await snapshot(db);
+  // PDFs and page text stay on the device; the backup records only what each source is.
+  stores.sources = stores.sources.map((x) => ({ id: x.id, title: x.title, pages: x.pages, bytes: x.bytes, mode: x.mode }));
   const counts = {};
   for (const s of STORES) counts[s] = stores[s].length;
   const backup = {
@@ -138,7 +143,7 @@ export function planMerge(local, incoming) {
   if (conflicts) why(`${conflicts} event(s) share an id with a different local event; the local copy was kept`);
   const merged = rebuild(local.events.concat(newEvents));
 
-  const writes = { packs: [], profiles: [], sources: [] };
+  const writes = { packs: [], profiles: [] };
   for (const s of CONTENT_STORES) writes[s] = [];
   const counts = {};
   const blank = () => ({ new: 0, updated: 0, unchanged: 0, skipped: 0 });
@@ -172,6 +177,7 @@ export function planMerge(local, incoming) {
     const c = (counts[s] = blank());
     const localMap = new Map(local[s].map((x) => [x.id, x]));
     for (const I of incoming[s]) {
+      if (I._pack === SELF_PACK) continue;
       const l = localMap.get(I.id);
       const dec = decision.get(I._pack);
       if (!dec) {
@@ -194,7 +200,7 @@ export function planMerge(local, incoming) {
     }
   }
 
-  // Profiles: higher version wins. Sources: added when missing (Phase 3 adds more).
+  // Profiles: higher version wins.
   counts.profiles = blank();
   const localProfiles = new Map(local.profiles.map((p) => [p.id, p]));
   for (const p of incoming.profiles) {
@@ -203,12 +209,6 @@ export function planMerge(local, incoming) {
     if (!l) { writes.profiles.push(p); counts.profiles.new++; }
     else if (p.version > l.version) { writes.profiles.push(p); counts.profiles.updated++; }
     else counts.profiles.unchanged++;
-  }
-  counts.sources = blank();
-  const localSources = new Map(local.sources.map((x) => [x.id, x]));
-  for (const x of incoming.sources) {
-    if (!localSources.has(x.id)) { writes.sources.push(x); counts.sources.new++; }
-    else counts.sources.unchanged++;
   }
 
   const changes = newEvents.length + Object.values(writes).reduce((n, w) => n + w.length, 0);
@@ -240,7 +240,7 @@ export async function planBackupImport(db, text) {
 }
 
 export async function commitBackupImport(db, plan) {
-  const stores = ['events', 'packs', 'profiles', 'sources', ...CONTENT_STORES];
+  const stores = ['events', 'packs', 'profiles', ...CONTENT_STORES];
   await db.tx(stores, 'readwrite', (s) => {
     for (const e of plan.newEvents) s.events.put(e);
     for (const name of stores) {

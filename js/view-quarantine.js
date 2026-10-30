@@ -44,7 +44,7 @@ export async function render() {
         for (const b of el.querySelectorAll('button')) b.disabled = false;
       }
     };
-    el.append(
+    el.append(...[
       h('div', { class: 'item-head' }, h('span', { class: 'badge', text: a.type }), h('span', { class: 'badge warn', text: why }), h('code', { class: 'item-id', text: a.id })),
       h('p', { class: 'item-text' }, gapText(a.text)),
       h('p', { class: 'answer' }, h('span', { class: 'muted', text: 'Answer: ' }), String(a.answer)),
@@ -56,7 +56,7 @@ export async function render() {
         : [
           h('button', { class: 'btn', onclick: () => act('atom.discarded', 'Discarded') }, 'Discard'),
           h('button', { class: 'btn primary', onclick: () => act('atom.approved', 'Approved') }, 'Approve'),
-        ]));
+        ])].filter(Boolean));
     return el;
   };
 

@@ -41,6 +41,8 @@ Status: built and tested in headless Chromium (desktop, plus a Pixel 7 phone pro
 
 ## Manual test script
 
+> Since Phases 2 and 3 were built, Today is the start screen and Quarantine sits under Today. Use [TESTING.md](TESTING.md), which covers all three phases in one pass. The script below is kept as the Phase 1 record.
+
 ### A. Put it online (once, about 5 minutes, on the laptop)
 
 1. Open https://github.com/Adit8639/smriti → **Settings** → **Pages**.

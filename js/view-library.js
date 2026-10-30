@@ -4,8 +4,12 @@ import { h, clear, icon } from './ui.js';
 import { app, allNodes, activeProfile } from './store.js';
 import { buildTree, ancestors } from './tree.js';
 import { quarantineStatus } from './rebuild.js';
+import { STATE_NAMES } from './fsrs.js';
+import { readerTarget, openSource } from './links.js';
+import { sourcesForNode } from './sources.js';
+import { quickAdd } from './sheets.js';
 import { call } from './data.js';
-import { formatDate, addDays, plural, wordCount, isObj } from './util.js';
+import { formatDate, addDays, plural, wordCount, isObj, localDate } from './util.js';
 
 const LS_EXPANDED = 'smriti.expanded';
 const LS_ALL = 'smriti.libShowAll';
@@ -148,6 +152,11 @@ export function gapText(text) {
 export function sourceLabel(item, packs, pyqs) {
   const s = item.source;
   if (!isObj(s)) return typeof s === 'string' ? s : 'No source';
+  if (s.sourceId) {
+    const src = app.state.sources[s.sourceId];
+    return `${src ? src.title : 'A source not on this device'}${s.page !== undefined ? `, p. ${s.page}` : ''} · made by me`;
+  }
+  if (!s.pack && s.title) return `${s.title}${s.page !== undefined && s.page !== '' ? `, p. ${s.page}` : ''}${item.origin === 'self' ? ' · made by me' : ''}`;
   if (s.pyq) {
     const q = pyqs.get(s.pyq);
     return q ? `PYQ ${q.year} · ${q.id}` : `PYQ ${s.pyq} (not installed)`;
@@ -165,19 +174,33 @@ const STATUS_BADGE = {
   discarded: ['Discarded', 'muted'],
 };
 
+function scheduleLine(rec) {
+  if (!rec || !rec.card) return 'Not reviewed yet';
+  const c = rec.card;
+  return `${STATE_NAMES[c.state]} · due ${formatDate(localDate(c.due))} · ${rec.reviews || 0} reviews, ${c.lapses} lapses`;
+}
+
 function atomCard(a, ctx) {
   const st = quarantineStatus(a, app.state);
   const badge = STATUS_BADGE[st];
   const orphan = ctx.orphans.get(`atoms:${a.id}`);
+  const rec = app.state.atoms[a.id];
+  const target = readerTarget(a);
   return h('article', { class: 'card item', id: `item-${a.id}`, tabindex: '0', 'data-nav': '' },
     h('div', { class: 'item-head' },
       h('span', { class: 'badge', text: a.type }),
       badge ? h('span', { class: `badge ${badge[1]}`, text: badge[0] }) : null,
+      rec && rec.suspended ? h('a', { class: 'badge warn', href: `#/rebuild/${encodeURIComponent(a.id)}`, text: 'Leech: rebuild' }) : null,
+      rec && rec.retired ? h('span', { class: 'badge muted', text: 'Split (retired)' }) : null,
+      a.origin === 'self' ? h('span', { class: 'badge muted', text: 'Mine' }) : null,
       orphan ? h('span', { class: 'badge warn', text: 'Orphaned', title: `missing ${orphan.join(', ')}` }) : null,
       h('code', { class: 'item-id', text: a.id })),
     h('p', { class: 'item-text' }, gapText(a.text)),
     h('p', { class: 'answer' }, h('span', { class: 'muted', text: 'Answer: ' }), String(a.answer)),
-    h('p', { class: 'source' }, h('span', { class: 'muted', text: 'Source: ' }), sourceLabel(a, ctx.packs, ctx.pyqs)),
+    h('p', { class: 'source' }, h('span', { class: 'muted', text: 'Source: ' }), sourceLabel(a, ctx.packs, ctx.pyqs),
+      target ? [' ', h('button', { class: 'link-btn', type: 'button', onclick: () => openSource(target) }, `Open page ${target.page}`)] : null),
+    h('p', { class: 'small muted', text: scheduleLine(rec) }),
+    rec && rec.mnemonic ? h('p', { class: 'small' }, h('span', { class: 'muted', text: 'My mnemonic: ' }), rec.mnemonic) : null,
     a.note ? h('p', { class: 'small' }, h('span', { class: 'muted', text: 'Note: ' }), a.note) : null,
     a.mnemonic ? h('p', { class: 'small' }, h('span', { class: 'muted', text: 'Mnemonic: ' }), a.mnemonic) : null,
     a.eventDate ? h('p', { class: 'small muted', text: `Event ${formatDate(a.eventDate)}${a.shelfLifeDays ? ` · counts for Prelims until ${formatDate(addDays(a.eventDate, a.shelfLifeDays))}` : ''}` }) : null,
@@ -207,7 +230,8 @@ function probeCard(q, ctx) {
     h('div', { class: 'item-head' }, h('span', { class: 'badge', text: q.format }), h('span', { class: 'badge muted', text: `difficulty ${q.difficulty}` }),
       orphan ? h('span', { class: 'badge warn', text: 'Orphaned' }) : null, h('code', { class: 'item-id', text: q.id })),
     h('p', { class: 'item-text pre' }, gapText(q.stem)),
-    h('details', null, h('summary', { text: 'Show answer' }), details, h('p', { class: 'small' }, h('span', { class: 'muted', text: 'Why: ' }), q.explanation)));
+    h('details', null, h('summary', { text: 'Show answer' }), details, h('p', { class: 'small' }, h('span', { class: 'muted', text: 'Why: ' }), q.explanation)),
+    h('div', { class: 'card-actions' }, h('a', { class: 'btn small', href: `#/practice/probe/${encodeURIComponent(q.id)}?from=${encodeURIComponent(ctx.nodeId)}` }, 'Try it (practice)')));
 }
 
 function pyqCard(q, ctx) {
@@ -256,6 +280,31 @@ function answerCard(a) {
       a.valueAdds && a.valueAdds.length ? h('ul', { class: 'small' }, a.valueAdds.map((v) => h('li', null, h('span', { class: 'muted', text: `${v.type}: ` }), v.text))) : null));
 }
 
+const NODE_STATUS = { new: ['New', 'muted'], learning: ['Learning', 'warn'], learned: ['Learned', 'ok'] };
+
+function studyPanel(id, n, atoms) {
+  const st = app.state.nodes[id] || { status: 'new' };
+  const [label, kind] = NODE_STATUS[st.status] || NODE_STATUS.new;
+  const loopId = app.state.activeLoop[id];
+  const loop = loopId && app.state.loops[loopId];
+  const steps = { pretest: 1, read: 2, recall: 3, probes: 4, output: 5 };
+  const notes = app.state.notes[id];
+  const maps = sourcesForNode(app.state, id);
+  return h('section', { class: 'card study' },
+    h('div', { class: 'item-head' },
+      h('span', { class: `badge ${kind}`, text: label }),
+      st.recallPct !== null && st.recallPct !== undefined ? h('span', { class: 'small muted', text: `last recall ${st.recallPct}%` }) : null,
+      st.completed ? h('span', { class: 'small muted', text: `${st.completed} loop${st.completed > 1 ? 's' : ''} done` }) : null,
+      notes ? h('span', { class: 'small muted', text: `notes R${notes.latest.level}, ${notes.revisions} revision${notes.revisions > 1 ? 's' : ''}` }) : null),
+    maps.length ? h('p', { class: 'chips' }, maps.map((m) => h('a', { class: 'chip', href: `#/reader/${encodeURIComponent(m.sourceId)}/${m.from}` }, `${(app.state.sources[m.sourceId] || { title: m.sourceId }).title} · p. ${m.from}${m.to !== m.from ? `–${m.to}` : ''}`)),
+      maps.length >= 3 ? h('span', { class: 'small warn-text', text: ' Limited sources, more revisions.' }) : null) : null,
+    h('div', { class: 'button-row' },
+      atoms.length || loop ? h('a', { class: 'btn primary', href: loop ? `#/learn/${encodeURIComponent(loopId)}` : `#/learn/start/${encodeURIComponent(id)}` }, loop ? `Resume Learn Loop (step ${steps[loop.step] || 1}/5)` : 'Start Learn Loop') : null,
+      h('a', { class: 'btn', href: `#/notes/${encodeURIComponent(id)}` }, 'Notes'),
+      atoms.length ? h('a', { class: 'btn', href: `#/practice/${encodeURIComponent(id)}` }, 'Practice') : null,
+      h('button', { class: 'btn', type: 'button', onclick: async () => { const a = await quickAdd({ nodeId: id }); if (a) location.hash = `#/node/${encodeURIComponent(id)}?focus=${encodeURIComponent(a.id)}`; } }, 'Add atom')));
+}
+
 async function renderNode(id, focus) {
   const nodes = allNodes();
   const n = nodes.get(id);
@@ -281,7 +330,7 @@ async function renderNode(id, focus) {
     if (isObj(a.source) && a.source.pyq && !pyqsById.has(a.source.pyq)) { const q = await db.get('pyqs', a.source.pyq); if (q) pyqsById.set(q.id, q); }
   }
   const orphans = new Map((app.derived.integrity ? app.derived.integrity.orphans : []).map((o) => [`${o.store}:${o.id}`, o.missing]));
-  const ctx = { packs, pyqs: pyqsById, atomsById, orphans };
+  const ctx = { packs, pyqs: pyqsById, atomsById, orphans, nodeId: id };
   const direct = app.derived.nodeCounts[id] || {};
   const totals = app.derived.subtreeCounts || {};
   const total = totals[id];
@@ -303,6 +352,7 @@ async function renderNode(id, focus) {
     h('p', { class: 'counts' },
       h('span', null, h('strong', { text: 'Here: ' }), countsText(direct)),
       kids.length ? h('span', null, h('strong', { text: ' · With subtopics: ' }), countsText(total)) : null),
+    studyPanel(id, n, atoms),
     kids.length ? h('section', null, h('h3', { class: 'section-title', text: `Subtopics (${kids.length})` }),
       h('ul', { class: 'plain link-list' }, kids.map((k) => h('li', null, h('a', { href: `#/node/${encodeURIComponent(k.id)}`, 'data-nav': '' }, k.title, h('span', { class: 'tree-meta', text: countsText(totals[k.id]) })))))) : null,
     section('Atoms', atoms, atomCard),

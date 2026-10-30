@@ -8,6 +8,9 @@ import { examCountdown, resolvePhases, phaseOn, secondsPerQuestion } from './pro
 import { APP_VERSION, SCHEMA_VERSION } from './version.js';
 import * as clock from './clock.js';
 import { formatDate, formatBytes, localDate, isIsoDate, formatDateTime, daysBetween } from './util.js';
+import { limits, minutesToday } from './study.js';
+import { reviewCapFor } from './queue.js';
+import { leechThreshold } from './rebuild.js';
 
 const DAYS = [['mon', 'Mon'], ['tue', 'Tue'], ['wed', 'Wed'], ['thu', 'Thu'], ['fri', 'Fri'], ['sat', 'Sat'], ['sun', 'Sun']];
 const DEFAULT_MINUTES = 180;
@@ -148,9 +151,60 @@ function budgetSection() {
   });
   return h('section', { class: 'card' },
     h('h2', { text: 'Daily time budget' }),
-    h('p', { class: 'small muted', text: 'Minutes you can study each weekday. The daily mission (Phase 6) is built from this. Synced across devices.' }),
+    h('p', { class: 'small muted', text: 'Minutes you can study each weekday. The daily review cap follows it, and the daily mission (Phase 6) is built from it. Synced across devices.' }),
     h('div', { class: 'budget-grid' }, inputs),
     totalEl);
+}
+
+function numberSetting({ label, key, value, min, max, step = 1, help, onSave }) {
+  const input = h('input', { type: 'number', min: String(min), max: String(max), step: String(step), value: String(value), inputmode: step < 1 ? 'decimal' : 'numeric', 'aria-label': label });
+  input.addEventListener('change', async () => {
+    const v = Number(input.value);
+    if (!Number.isFinite(v) || v < min || v > max) { toast(`${label}: between ${min} and ${max}.`, { kind: 'warn' }); input.value = String(value); return; }
+    await (onSave ? onSave(v) : appendEvent('settings.set', { key, value: step < 1 ? Math.round(v * 100) / 100 : Math.round(v) }));
+    toast(`${label} saved.`, { kind: 'ok', ms: 2000 });
+  });
+  return h('label', { class: 'field' }, h('span', { text: label }), input, help ? h('span', { class: 'small muted', text: help }) : null);
+}
+
+function studySection() {
+  const st = app.state.settings;
+  const lim = limits();
+  const auto = !(Number.isInteger(st.reviewCap) && st.reviewCap > 0);
+  const capMode = h('select', { 'aria-label': 'Daily review cap' },
+    h('option', { value: 'auto', selected: auto ? true : null }, `Automatic from the budget (today: ${reviewCapFor(minutesToday(), null)})`),
+    h('option', { value: 'fixed', selected: auto ? null : true }, 'A fixed number'));
+  const capNum = h('input', { type: 'number', min: '20', max: '1000', step: '10', value: String(auto ? 200 : st.reviewCap), 'aria-label': 'Fixed review cap', hidden: auto ? true : null });
+  const saveCap = async () => {
+    const v = capMode.value === 'auto' ? null : Math.max(20, Math.min(1000, Math.round(Number(capNum.value) || 200)));
+    capNum.hidden = capMode.value === 'auto';
+    await appendEvent('settings.set', { key: 'reviewCap', value: v });
+    toast('Review cap saved.', { kind: 'ok', ms: 2000 });
+  };
+  capMode.addEventListener('change', saveCap);
+  capNum.addEventListener('change', saveCap);
+  const p = activeProfile();
+  const card = (p && p.targets && p.targets.cardSeconds) || 8;
+  const lang = h('select', { 'aria-label': 'Dictation language' },
+    [['en-IN', 'English (India)'], ['hi-IN', 'Hindi'], ['en-GB', 'English (UK)'], ['en-US', 'English (US)']].map(([v, l]) => h('option', { value: v, selected: (st.dictationLang || 'en-IN') === v ? true : null }, l)));
+  lang.addEventListener('change', () => appendEvent('settings.set', { key: 'dictationLang', value: lang.value }));
+  let dbg = false;
+  try { dbg = localStorage.getItem('smriti.debug') === '1'; } catch (_) { /* preference only */ }
+  const debug = h('input', { type: 'checkbox', checked: dbg ? true : null });
+  debug.addEventListener('change', () => { try { localStorage.setItem('smriti.debug', debug.checked ? '1' : '0'); } catch (_) { /* preference only */ } });
+  return h('section', { class: 'card' },
+    h('h2', { text: 'Study' }),
+    numberSetting({ label: 'New atoms per day', key: 'newPerDay', value: lim.newPerDay, min: 0, max: 200, help: 'One new atom comes after every five reviews. New atoms pause while due reviews are over the cap.' }),
+    h('div', { class: 'field' }, h('span', { text: 'Daily review cap' }), capMode, capNum,
+      h('span', { class: 'small muted', text: 'Automatic: 200 reviews on a 3-hour day, scaled to each day’s budget (50 to 400). Reviews over the cap carry over, most-forgotten first.' })),
+    numberSetting({ label: 'Desired retention', key: 'retention', value: st.retention || 0.9, min: 0.8, max: 0.97, step: 0.01, help: 'FSRS schedules each atom so you recall it with this probability. 0.90 is the default; higher means more reviews.' }),
+    numberSetting({
+      label: 'Seconds per card (speed target)', key: null, value: card, min: 3, max: 60,
+      help: 'A right answer slower than this is graded Hard. Full Prelims questions use the paper’s time per question (72 s for GS-I).',
+      onSave: (v) => appendEvent('profile.set', { profileId: p.id, path: 'targets.cardSeconds', value: Math.round(v) }),
+    }),
+    h('label', { class: 'field' }, h('span', { text: 'Dictation language' }), lang),
+    h('label', { class: 'check' }, debug, ' Show the FSRS debug panel during reviews (ratings, intervals, card state)'));
 }
 
 function themeSection() {
@@ -193,7 +247,7 @@ function storageSection() {
   const box = h('div', null, h('p', { class: 'muted small', text: 'Checking…' }));
   const draw = async () => {
     const s = await storageInfo();
-    box.replaceChildren(
+    box.replaceChildren(...[
       h('p', null, h('strong', { text: 'Used: ' }), s.usage === null ? 'unknown' : `${formatBytes(s.usage)} of ${formatBytes(s.quota)} available to this site`),
       h('p', null, h('strong', { text: 'Persistent: ' }),
         s.persisted === true ? h('span', { class: 'badge ok', text: 'granted' }) : s.persisted === false ? h('span', { class: 'badge warn', text: 'not granted' }) : h('span', { class: 'badge muted', text: 'unsupported' })),
@@ -206,7 +260,7 @@ function storageSection() {
           toast(r ? 'Persistent storage granted.' : 'The browser did not grant persistent storage yet.', { kind: r ? 'ok' : 'warn' });
           draw();
         },
-      }, 'Request persistent storage') : null);
+      }, 'Request persistent storage') : null].filter(Boolean));
   };
   draw();
   return h('section', { class: 'card' }, h('h2', { text: 'Storage' }), box);
@@ -232,6 +286,7 @@ function devSection() {
     h('p', { class: 'small muted', text: 'Moves the app clock for time-travel tests (backup reminder, later shelf lives and schedules). Events created while it is on are stamped with the test time. This setting stays on this device.' }),
     status,
     h('div', { class: 'button-row' }, shift(-1), shift(1), shift(7), shift(30), h('button', { class: 'btn small', onclick: () => setOff(0) }, 'Reset')),
+    numberSetting({ label: 'Leech threshold (lapses before an atom is suspended)', key: 'leechThreshold', value: leechThreshold(app.state), min: 1, max: 20, help: 'Default 6. Lower it only to test the leech flow, then set it back.' }),
     h('label', { class: 'field' }, h('span', { text: 'Jump to date' }), dateIn),
     h('div', { class: 'button-row' }, h('a', { class: 'btn small', href: 'tests/' }, 'Open the self-test page')));
 }
@@ -257,6 +312,7 @@ function aboutSection() {
 export function render() {
   return h('div', { class: 'settings' },
     profileSection(),
+    studySection(),
     budgetSection(),
     themeSection(),
     deviceSection(),

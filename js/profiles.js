@@ -42,14 +42,15 @@ export function validateProfile(p) {
 }
 
 // Paths look like "dates.prelims.date" or "phases.foundation.until"; inside arrays the
-// segment matches an element's id.
+// segment matches an element's id. Missing objects on the way are created.
 function setPath(obj, path, value) {
   const parts = path.split('.');
   let cur = obj;
   for (let i = 0; i < parts.length - 1; i++) {
     const k = parts[i];
-    const next = Array.isArray(cur) ? cur.find((x) => x && x.id === k) : cur[k];
-    if (next === undefined || next === null || typeof next !== 'object') return false;
+    let next = Array.isArray(cur) ? cur.find((x) => x && x.id === k) : cur[k];
+    if ((next === undefined || next === null) && !Array.isArray(cur)) next = cur[k] = {};
+    if (typeof next !== 'object') return false;
     cur = next;
   }
   const last = parts[parts.length - 1];
@@ -66,6 +67,7 @@ export function checkEdit(profile, path, value) {
     if (m[2] === 'date') return isIsoDate(value) ? null : 'must be a valid date';
     return typeof value === 'boolean' ? null : 'must be true or false';
   }
+  if (path === 'targets.cardSeconds') return Number.isInteger(value) && value >= 3 && value <= 60 ? null : 'must be 3–60 seconds';
   m = /^phases\.([a-zA-Z0-9_-]+)\.until$/.exec(path);
   if (m) {
     if (!profile.phases.some((p) => p.id === m[1])) return 'unknown phase';

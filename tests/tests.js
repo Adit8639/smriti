@@ -14,6 +14,14 @@ import { scanIntegrity, countByNode, countBySubtree } from '../js/integrity.js';
 import { contentHash, stableStringify, isIsoDate } from '../js/util.js';
 import { APP_VERSION } from '../js/version.js';
 import { demoFiles, demoPacks, profiles as loadProfiles, schemaExample, clone } from './fixtures.js';
+import { review as fsrsReview, preview as fsrsPreview, newCard, State } from '../js/fsrs.js';
+import { suggestRating, evaluate, chooseProbe, formatWeights, targetMs, autoCard, contrastProbe, shuffled } from '../js/probes.js';
+import { answerMatches, clozeTargets, makeCloze } from '../js/cloze.js';
+import { buildQueue, interleave, examAnchor, anchoredDue, reviewCapFor, isArchived } from '../js/queue.js';
+import { detectConfusions } from '../js/confusion.js';
+import { ankiTsv } from '../js/anki.js';
+import { suggestByKeywords, suggestFromPack } from '../js/sources.js';
+import { pairKey } from '../js/rebuild.js';
 
 const tests = [];
 const test = (group, name, fn) => tests.push({ group, name, fn });
@@ -500,6 +508,345 @@ test('End to end', 'clean up scratch databases', async () => {
   dbB.close();
   await deleteDB(DB_A);
   await deleteDB(DB_B);
+});
+
+
+// ------------------------------------------------------------------ Phase 2: scheduling and rating
+
+const T1 = Date.UTC(2026, 10, 2, 4, 0, 0);
+const ev = (type, payload, ts, dev = DEV_A) => makeEvent(type, payload, dev, ts);
+const DAYMS = 86400000;
+
+test('FSRS', 'cards are deterministic and follow the learning steps', () => {
+  const run = () => {
+    let c = null;
+    const out = [];
+    let t = T1;
+    for (const r of [3, 3, 1, 3, 4]) { c = fsrsReview(c, t, r); out.push([c.state, c.due - t]); t = c.due + 3600e3; }
+    return out;
+  };
+  eq(run(), run());
+  const first = fsrsReview(null, T1, 3);
+  eq(first.state, State.Learning);
+  eq(first.due - T1, 10 * 60e3, 'Good on a new card waits 10 minutes');
+  eq(fsrsReview(null, T1, 4).state, State.Review, 'Easy graduates at once');
+  const p = fsrsPreview(newCard(T1), T1);
+  assert(p[1].due < p[3].due && p[3].due < p[4].due, 'Again < Good < Easy');
+});
+
+test('Rating', 'suggested rating follows the contract', () => {
+  const base = { correct: true, partial: false, ms: 5000, target: 8000, prevRating: 3, format: 'cloze' };
+  eq(suggestRating({ ...base, correct: false, confidence: 'sure' }), 1, 'wrong → Again');
+  eq(suggestRating({ ...base, confidence: 'guess' }), 2, 'Guess → Hard');
+  eq(suggestRating({ ...base, confidence: '5050' }), 2, '50-50 → Hard');
+  eq(suggestRating({ ...base, confidence: 'sure', ms: 9000 }), 2, 'slow → Hard');
+  eq(suggestRating({ ...base, confidence: 'sure' }), 3, 'sure within target → Good');
+  eq(suggestRating({ ...base, confidence: 'sure', ms: 3000 }), 4, 'under 40% after Good → Easy');
+  eq(suggestRating({ ...base, confidence: 'sure', ms: 3000, prevRating: 2 }), 3, 'no Easy without a previous Good');
+  eq(suggestRating({ ...base, confidence: 'sure', ms: 3000, prevRating: undefined }), 3, 'new atom: no Easy');
+  eq(suggestRating({ ...base, confidence: 'sure', partial: true }), 2, 'lucky pass held at Hard');
+  eq(suggestRating({ correct: true, format: 'explain', ratio: 1, prevRating: 3 }), 4);
+  eq(suggestRating({ correct: true, format: 'explain', ratio: 0.8 }), 3);
+  eq(suggestRating({ correct: true, format: 'explain', ratio: 0.6 }), 2);
+});
+
+test('Rating', 'speed targets: 8 s per card, 72 s per Prelims question', () => {
+  const cse = PROFILES.find((p) => p.id === 'cse-2028');
+  eq(targetMs({ format: 'cloze' }, cse), 8000);
+  eq(targetMs({ format: 'statement' }, cse), 72000);
+  eq(targetMs({ format: 'match', pairs: [1, 2, 3] }, cse), 24000);
+  eq(targetMs({ format: 'explain' }, cse), null);
+});
+
+test('Answers', 'typed answers are matched forgivingly but numbers exactly', () => {
+  assert(answerMatches('42', '42nd') && answerMatches('42ND', '42nd'), 'ordinals');
+  assert(answerMatches('speaker of lok sabha', 'Speaker of the Lok Sabha'), 'articles ignored');
+  assert(answerMatches('habeus corpus', 'habeas corpus'), 'one typo');
+  assert(!answerMatches('1977', '1976') && !answerMatches('44th', '42nd'), 'numbers exact');
+  assert(!answerMatches('', 'x') && !answerMatches('orally', 'in writing'));
+});
+
+test('Answers', 'every format is checked correctly', () => {
+  const c = content();
+  const byFmt = (f) => c.probes.find((p) => p.format === f);
+  eq(evaluate(byFmt('cloze'), { typed: '42nd' }).correct, true);
+  eq(evaluate(byFmt('cloze'), { self: false }).correct, false);
+  const st = byFmt('statement');
+  eq(evaluate(st, { marks: st.statements.map((x) => x.true), choice: st.answer }), { correct: true, partial: false });
+  eq(evaluate(st, { marks: st.statements.map(() => true), choice: st.answer }).partial, true, 'right option, wrong mark');
+  const m = byFmt('match');
+  eq(evaluate(m, { pairing: m.pairs.map((_, i) => i) }).correct, true);
+  eq(evaluate(m, { pairing: [1, 0, 2] }).correct, false);
+  const o = byFmt('order');
+  eq(evaluate(o, { order: o.items.map((_, i) => i) }).correct, true);
+  eq(evaluate(o, { order: [1, 0, 2, 3] }).correct, false);
+  const x = byFmt('explain');
+  eq(evaluate(x, { ticked: x.keyPoints.map(() => true) }).ratio, 1);
+  eq(evaluate(x, { ticked: [true] }).correct, false);
+  for (const f of ['tf', 'notCorrect', 'odd', 'assertionReason', 'identify']) {
+    const p = byFmt(f);
+    const right = f === 'tf' ? { marks: p.statements.map((s) => s.true) } : { choice: p.answer };
+    eq(evaluate(p, right).correct, true, f);
+  }
+});
+
+test('Chooser', 'least recently used format, weighted by the format mix', () => {
+  const cse = PROFILES.find((p) => p.id === 'cse-2028');
+  const c = content();
+  const atom = c.atoms.find((a) => a.id === 'demo-polity.0016');
+  const probes = c.probes.filter((p) => p.atoms.includes(atom.id));
+  const w = formatWeights(cse, atom);
+  const first = chooseProbe({ atom, probes, rec: null, probeUse: {}, weights: w, now: T1 });
+  eq(first.probe.format, 'statement', 'never used: the exam-heavy format first');
+  const rec = { formats: { statement: T1 } };
+  const next = chooseProbe({ atom, probes, rec, probeUse: { [first.probe.id]: T1 }, weights: w, now: T1 + DAYMS });
+  eq(next.probe.format, 'cloze', 'then the least recently used one');
+  eq(autoCard(c.atoms.find((a) => a.id === 'demo-polity.0001')).format, 'cloze');
+  eq(autoCard({ id: 'x.0001', text: 'Capital of India?', answer: 'New Delhi' }).format, 'qa');
+});
+
+test('Cloze', 'gap suggestions find Articles, amendments, years and names', () => {
+  const t = clozeTargets('The 42nd Amendment Act, 1976 added Article 51A on the advice of the Swaran Singh Committee.').map((x) => x.text);
+  for (const want of ['42nd', '51A', '1976', 'Swaran Singh Committee']) assert(t.includes(want), `${want} in ${t.join(' | ')}`);
+  eq(makeCloze('Added in 1976.', '1976'), 'Added in ___.');
+});
+
+// ------------------------------------------------------------------ Phase 2: queue
+
+function synthetic(nAtoms, nNodes, reviewed, now) {
+  const atoms = [];
+  const s = rebuild([]);
+  for (let i = 0; i < nAtoms; i++) {
+    const id = `syn.${String(i).padStart(4, '0')}`;
+    atoms.push({ id, type: 'fact', text: `Fact ${i} is ___.`, answer: String(i), nodes: [`cse.syn.n${i % nNodes}`], source: { pack: 'syn', page: 1 }, origin: 'source', verify: false, _pack: 'syn', _v: 1 });
+    if (i < reviewed) {
+      s.atoms[id] = { card: { ...newCard(now - 30 * DAYMS), state: State.Review, s: 5 + (i % 20), d: 5, due: now - (i % 10) * DAYMS + (i % 3) * 3600e3, reps: 3, lapses: 0, last: now - 20 * DAYMS }, reviews: 3, firstTs: now - 30 * DAYMS, lastTs: now - 20 * DAYMS, lastRating: 3 };
+    }
+  }
+  return { atoms, s };
+}
+
+test('Queue', 'a 5,000-atom queue builds in under 1 s, interleaved and capped', () => {
+  const now = Date.UTC(2026, 10, 2, 6);
+  const dayStart = now - 6 * 3600e3;
+  const { atoms, s } = synthetic(5000, 120, 3000, now);
+  const t0 = performance.now();
+  const q = buildQueue({ atoms, state: s, now, dayStart, dayEnd: dayStart + DAYMS, profile: PROFILES.find((p) => p.id === 'cse-2028'), limits: { newPerDay: 30, reviewCap: 200 }, nodeOrder: new Map() });
+  const ms = performance.now() - t0;
+  assert(ms < 1000, `took ${Math.round(ms)} ms`);
+  eq(q.counts.cap, 200);
+  assert(q.items.length <= 200, 'respects the cap');
+  assert(q.counts.overflow > 0 && q.counts.new === 0 && q.counts.paused, 'overflow shown honestly; new atoms paused');
+  let run = 1;
+  for (let i = 1; i < q.items.length; i++) { run = q.items[i].node === q.items[i - 1].node ? run + 1 : 1; assert(run <= 3, `run of ${run} at ${i}`); }
+});
+
+test('Queue', 'a new atom after every five reviews, never four in a row from one topic', () => {
+  const reviews = Array.from({ length: 20 }, (_, i) => ({ atomId: `r${i}`, node: i < 10 ? 'A' : 'B' }));
+  const news = Array.from({ length: 4 }, (_, i) => ({ atomId: `n${i}`, node: 'C' }));
+  const out = interleave(reviews, news);
+  eq(out.length, 24);
+  eq(out.slice(0, 6).map((x) => x.atomId[0]).join(''), 'rrrrrn');
+  let run = 1;
+  for (let i = 1; i < out.length; i++) { run = out[i].node === out[i - 1].node ? run + 1 : 1; assert(run <= 3, 'run ≤ 3'); }
+});
+
+test('Queue', 'exam anchoring: one review in the 45-day window, Mains-only paused', () => {
+  const cse = PROFILES.find((p) => p.id === 'cse-2028');
+  const exam = new Date(2028, 4, 28).getTime();
+  const inWindow = exam - 20 * DAYMS;
+  const a = examAnchor(cse, inWindow);
+  assert(a.inWindow && a.pauseMains, 'window is on');
+  assert(!examAnchor(cse, exam - 60 * DAYMS).inWindow, 'not before the window');
+  const card = { due: exam + 90 * DAYMS };
+  const atom = { id: 'x.0001', stage: ['prelims'] };
+  const d = anchoredDue(card, { lastTs: a.windowStart - 10 * DAYMS }, atom, a);
+  assert(d >= a.windowStart && d < exam, 'pulled into the window');
+  eq(anchoredDue(card, { lastTs: a.windowStart + DAYMS }, atom, a), card.due, 'already reviewed in the window');
+  eq(anchoredDue(card, {}, { id: 'y', stage: ['mains'] }, a), card.due, 'Mains-only not anchored');
+  const q = buildQueue({ atoms: [{ id: 'm.0001', nodes: ['n'], stage: ['mains'], origin: 'source', verify: false, text: 'x ___', answer: 'y' }], state: rebuild([]), now: inWindow, dayStart: inWindow, dayEnd: inWindow + DAYMS, profile: cse, limits: { newPerDay: 30, reviewCap: 200 }, nodeOrder: new Map() });
+  eq([q.items.length, q.counts.mainsPaused], [0, 1]);
+});
+
+test('Queue', 'review cap follows the weekday budget', () => {
+  eq([reviewCapFor(180), reviewCapFor(90), reviewCapFor(0), reviewCapFor(600), reviewCapFor(180, 120)], [200, 100, 50, 400, 120]);
+  assert(isArchived({ eventDate: '2024-01-01', shelfLifeDays: 540 }, Date.UTC(2026, 0, 1)) && !isArchived({ eventDate: '2025-09-09', shelfLifeDays: 540 }, Date.UTC(2026, 9, 30)));
+});
+
+test('Queue', 'quarantined atoms stay out; self-made and missed-recall atoms come first', () => {
+  const now = T1;
+  const atoms = [
+    { id: 'q.0001', nodes: ['n'], origin: 'model', verify: true, text: 'a ___', answer: 'b' },
+    { id: 'p.0001', nodes: ['n'], origin: 'source', verify: false, text: 'c ___', answer: 'd' },
+    { id: 'self.X', nodes: ['n'], origin: 'self', verify: false, text: 'e ___', answer: 'f' },
+  ];
+  const s = rebuild([ev('atom.created', { atom: atoms[2] }, now - 1000)]);
+  const q = buildQueue({ atoms, state: s, now, dayStart: now - 3600e3, dayEnd: now + 20 * 3600e3, profile: null, limits: { newPerDay: 30, reviewCap: 200 }, nodeOrder: new Map() });
+  eq(q.items.map((x) => x.atomId), ['self.X', 'p.0001']);
+  eq(q.counts.quarantined, 1);
+});
+
+// ------------------------------------------------------------------ Phase 2: leeches, confusions, causes
+
+test('Leech', 'six lapses suspend the atom; a rebuild brings it back', () => {
+  const id = 'demo-polity.0005';
+  const evs = [];
+  let t = T1;
+  let s = rebuild([]);
+  const rate = (r) => { const e = ev('review.done', { atomId: id, mode: 'review', correct: r > 1, rating: r }, t); evs.push(e); s = applyEvent(s, e); t = s.atoms[id].card.due + 60e3; };
+  rate(4);
+  for (let i = 0; i < 6; i++) { rate(1); rate(3); rate(3); }
+  const rec = s.atoms[id];
+  assert(rec.card.lapses >= 6 && rec.suspended, `lapses ${rec.card.lapses}, suspended ${rec.suspended}`);
+  const rebuiltEv = ev('atom.rebuilt', { atomId: id, kind: 'mnemonic', text: '17 = untouchability' }, t);
+  s = applyEvent(s, rebuiltEv);
+  assert(!s.atoms[id].suspended && s.atoms[id].mnemonic && s.atoms[id].forcedDue === t, 'rebuilt, back today');
+  eq(stableStringify(rebuild(evs.concat(rebuiltEv))), stableStringify(s), 'rebuild matches incremental');
+});
+
+test('Leech', 'the threshold is a synced setting (for testing the flow)', () => {
+  const id = 'x.0001';
+  let s = rebuild([ev('settings.set', { key: 'leechThreshold', value: 2 }, T1)]);
+  let t = T1 + 1000;
+  const rate = (r) => { s = applyEvent(s, ev('review.done', { atomId: id, mode: 'review', correct: r > 1, rating: r }, t)); t = s.atoms[id].card.due + 60e3; };
+  rate(4); rate(1); rate(3); rate(3); rate(1);
+  assert(s.atoms[id].suspended, 'suspended after 2 lapses');
+});
+
+test('Confusion', 'two hits in 30 days open a contrast; a right answer resolves it', () => {
+  const k = pairKey('a.0001', 'b.0001');
+  let s = rebuild([ev('confusion.hit', { a: 'b.0001', b: 'a.0001', via: 'pair' }, T1)]);
+  eq(s.confusions[k].contrast, null, 'one hit: no contrast yet');
+  s = applyEvent(s, ev('confusion.hit', { a: 'a.0001', b: 'b.0001', via: 'pair' }, T1 + 3 * DAYMS));
+  eq(s.confusions[k].contrast.status, 'open');
+  const q = buildQueue({ atoms: [{ id: 'a.0001', nodes: ['n'], origin: 'source', verify: false, text: 'x ___', answer: 'y' }, { id: 'b.0001', nodes: ['n'], origin: 'source', verify: false, text: 'z ___', answer: 'w' }], state: s, now: T1 + 3 * DAYMS, dayStart: T1 + 3 * DAYMS - 3600e3, dayEnd: T1 + 4 * DAYMS, profile: null, limits: { newPerDay: 0, reviewCap: 200 }, nodeOrder: new Map() });
+  eq(q.items[0].type, 'contrast', 'scheduled the same day, first');
+  s = applyEvent(s, ev('contrast.done', { pair: k, correct: true }, T1 + 3 * DAYMS + 1000));
+  eq(s.confusions[k].contrast.status, 'resolved');
+  const far = rebuild([ev('confusion.hit', { a: 'a', b: 'b' }, T1), ev('confusion.hit', { a: 'a', b: 'b' }, T1 + 40 * DAYMS)]);
+  eq(far.confusions[pairKey('a', 'b')].contrast, null, 'hits 40 days apart do not count');
+});
+
+test('Confusion', 'a wrong pairing or option is traced to the other atom', () => {
+  const c = content();
+  const byId = new Map(c.atoms.map((a) => [a.id, { ...a, _pack: 'demo-polity', _v: 1 }]));
+  const match = c.probes.find((p) => p.id === 'demo-polity.p007');
+  const hits = detectConfusions(match, { pairing: [1, 0, 2] }, byId.get(match.atoms[0]), byId);
+  eq(hits.map((x) => pairKey(x.a, x.b)), [pairKey(match.atoms[0], match.atoms[1])], 'one swap, one pair');
+  const contrast = contrastProbe(byId.get('demo-polity.0015'), byId.get('demo-polity.0016'));
+  eq(detectConfusions(contrast, { pairing: [1, 0] }, byId.get('demo-polity.0015'), byId).length, 1);
+  const identify = { format: 'identify', atoms: ['demo-polity.0026'], options: ['Finance Commission', 'Subordinate Legislation', 'x', 'y'], answer: 0 };
+  const opt = detectConfusions(identify, { choice: 1 }, byId.get('demo-polity.0026'), byId);
+  eq(opt.map((x) => x.b), ['demo-polity.0017'], 'the chosen option is another atom’s answer');
+  eq(detectConfusions(match, { pairing: [0, 1, 2] }, byId.get(match.atoms[0]), byId), [], 'right answer: nothing');
+});
+
+test('Causes', "Didn't know resets to new; traps go to the Trap Log", () => {
+  let t = T1;
+  let s = rebuild([]);
+  const r1 = ev('review.done', { atomId: 'x.0001', mode: 'review', correct: false, rating: 1 }, t);
+  s = applyEvent(s, r1);
+  eq(s.atoms['x.0001'].pendingCause, r1.id);
+  s = applyEvent(s, ev('review.cause', { reviewId: r1.id, atomId: 'x.0001', cause: 'didnt-know' }, t + 1000));
+  eq([s.atoms['x.0001'].card.state, s.atoms['x.0001'].pendingCause, s.causes['didnt-know']], [State.New, undefined, 1]);
+  s = applyEvent(s, ev('review.cause', { atomId: 'y', cause: 'trap', trap: 'scope-creep' }, t + 2000));
+  eq([s.traps['scope-creep'], s.trapLog.length], [1, 1]);
+  const pre = applyEvent(rebuild([]), ev('review.done', { atomId: 'z', mode: 'pretest', correct: false, confidence: 'guess' }, t));
+  eq([pre.atoms.z.card, pre.atoms.z.pendingCause, pre.calib.guess.n], [undefined, undefined, 1], 'pre-test: no FSRS, no cause, counted for calibration');
+});
+
+test('Self atoms', 'quick add creates a self atom that is due at once; edits apply', () => {
+  const atom = { id: 'self.01TEST', type: 'fact', text: 'Capital ___', answer: 'Delhi', nodes: ['n'], source: { title: 'Me' } };
+  let s = rebuild([ev('atom.created', { atom }, T1)]);
+  eq([s.self['self.01TEST'].origin, s.atoms['self.01TEST'].forcedDue], ['self', T1]);
+  s = applyEvent(s, ev('atom.edited', { atomId: 'self.01TEST', fields: { answer: 'New Delhi', origin: 'model' } }, T1 + 1));
+  eq([s.self['self.01TEST'].answer, s.self['self.01TEST'].origin], ['New Delhi', 'self'], 'origin cannot be edited');
+  eq(rebuild([ev('atom.created', { atom: { ...atom, id: 'bad.0001' } }, T1)]).self, {}, 'only self.* ids');
+});
+
+test('Anki', 'tab-separated export with headers, four columns and syllabus tags', () => {
+  const c = content();
+  const tsv = ankiTsv([{ ...c.atoms[0], _pack: 'demo-polity' }, { ...c.atoms[1], _pack: '@self', text: 'Tab\there <b>', answer: 'x' }], { sourceLabel: () => 'Demo Source, p. 3' });
+  const lines = tsv.trim().split('\n');
+  eq(lines.slice(0, 3), ['#separator:tab', '#html:true', '#tags column:3']);
+  const row = lines[5].split('\t');
+  eq(row.length, 4);
+  assert(row[0].includes('[…]') && row[1].includes('<b>42nd</b>') && row[2].includes('smriti::cse::gs2::polity::preamble') && row[3] === 'Demo Source, p. 3', row.join(' | '));
+  const row2 = lines[6].split('\t');
+  eq(row2.length, 4, 'tabs inside text are escaped');
+  assert(row2[0].includes('&lt;b&gt;'), 'HTML escaped');
+});
+
+// ------------------------------------------------------------------ Phase 3: learn loop, notes, sources
+
+test('Learn Loop', 'recall below 70% keeps the topic Learning and schedules the misses', () => {
+  const node = 'cse.gs2.polity.fr';
+  let s = rebuild([ev('learn.started', { loopId: 'L1', nodeId: node }, T1)]);
+  eq([s.nodes[node].status, s.loops.L1.step, s.activeLoop[node]], ['learning', 'pretest', 'L1']);
+  s = applyEvent(s, ev('learn.step', { loopId: 'L1', step: 'read', pretest: { n: 3, correct: 1 } }, T1 + 1000));
+  s = applyEvent(s, ev('learn.recall', { loopId: 'L1', nodeId: node, ticked: ['a'], missed: ['b', 'c'], total: 3, pct: 33 }, T1 + 2000));
+  eq([s.loops.L1.step, s.atoms.b.forcedDue, s.nodes[node].recallPct], ['probes', T1 + 2000, 33]);
+  s = applyEvent(s, ev('learn.completed', { loopId: 'L1', nodeId: node }, T1 + 3000));
+  eq([s.nodes[node].status, s.activeLoop[node], s.loops.L1.done], ['learning', undefined, true]);
+  let s2 = rebuild([ev('learn.started', { loopId: 'L2', nodeId: node }, T1), ev('learn.recall', { loopId: 'L2', nodeId: node, pct: 80, missed: [] }, T1 + 1), ev('learn.completed', { loopId: 'L2', nodeId: node }, T1 + 2)]);
+  eq(s2.nodes[node].status, 'learned');
+});
+
+test('Notes', 'revisions, levels and per-source counts', () => {
+  const s = rebuild([
+    ev('source.added', { sourceId: 'src-1', title: 'Book', pages: 40 }, T1),
+    ev('note.saved', { nodeId: 'n', level: 1, text: 'a b c', words: 3, sourceIds: ['src-1'] }, T1 + 1),
+    ev('note.saved', { nodeId: 'n', level: 2, text: 'a b', words: 2, sourceIds: ['src-1'] }, T1 + 2),
+    ev('note.dropped', { nodeId: 'n', level: 2, dropped: ['x'] }, T1 + 3),
+  ]);
+  eq([s.notes.n.revisions, s.notes.n.latest.level, s.notes.n.levels[2].dropped, s.sourceRevisions['src-1']], [2, 2, 1, 2]);
+});
+
+test('Sources', 'topic suggestions from pack pages and from keywords', () => {
+  const c = content();
+  const r = suggestFromPack(c.atoms.map((a) => ({ ...a })), 0);
+  const devices = r.find((x) => x.nodeId === 'cse.gs2.polity.parliament.devices');
+  eq([devices.from, devices.to], [21, 21]);
+  const texts = ['Nothing here.', 'The Speaker presides over a joint sitting. Money Bill rules: a Money Bill starts in the Lok Sabha.', 'Joint sitting under Article 108 again: joint sitting, money bill.'];
+  const nodes = [{ id: 'leg', title: 'Law-making', keywords: ['money bill', 'joint sitting', 'article 108'] }, { id: 'other', title: 'Rivers', keywords: ['ganga', 'yamuna'] }];
+  const sg = suggestByKeywords(texts, nodes, 5);
+  eq(sg.map((x) => [x.nodeId, x.from, x.to]), [['leg', 2, 3]]);
+  const st = rebuild([ev('source.added', { sourceId: 'S', title: 'B', pages: 3 }, T1), ev('source.mapped', { sourceId: 'S', nodeId: 'leg', from: 2, to: 3 }, T1 + 1), ev('source.linked', { sourceId: 'S', packId: 'p', offset: 4 }, T1 + 2)]);
+  eq([st.sources.S.maps.leg, st.packSources.p], [{ from: 2, to: 3 }, { sourceId: 'S', offset: 4 }]);
+});
+
+test('Determinism', 'review-heavy logs rebuild identically in any order', () => {
+  const evs = [];
+  let t = T1;
+  for (let i = 0; i < 60; i++) {
+    evs.push(ev('review.done', { atomId: `a.${i % 7}`, mode: i % 5 ? 'review' : 'learn', correct: i % 3 !== 0, rating: (i % 4) + 1, confidence: ['sure', '5050', 'guess'][i % 3], ms: 4000 + i * 10, format: 'cloze' }, t, i % 2 ? DEV_A : DEV_B));
+    if (i % 9 === 0) evs.push(ev('confusion.hit', { a: `a.${i % 7}`, b: `a.${(i + 1) % 7}` }, t + 5));
+    t += 3600e3 * (1 + (i % 5));
+  }
+  const a = rebuild(evs);
+  for (let k = 0; k < 5; k++) eq(stableStringify(rebuild(evs.slice().sort(() => Math.random() - 0.5))), stableStringify(a));
+  let inc = rebuild([]);
+  for (const e of evs.slice().sort((x, y) => x.ts - y.ts || (x.id < y.id ? -1 : 1))) inc = applyEvent(inc, e);
+  eq(stableStringify(inc), stableStringify(a), 'incremental = full');
+});
+
+test('End to end', 'self-made atoms are rebuilt from events on another device', async () => {
+  const dbX = await freshDB('smriti-selftest-x');
+  const dbY = await freshDB('smriti-selftest-y');
+  await commitPackPlans(dbX, await planPackImport(dbX, await demoFiles()), { deviceId: DEV_A, now: T1 });
+  const atom = { id: 'self.01SELFTEST', type: 'fact', text: 'My ___', answer: 'fact', nodes: ['cse.gs2.polity.fr'], source: { title: 'Me' }, origin: 'self', verify: false };
+  await dbX.put('events', makeEvent('atom.created', { atom }, DEV_A, T1 + 1000));
+  const dx = await refreshDerived(dbX);
+  eq([dx.summary.counts.self, (await dbX.get('atoms', atom.id))._pack], [1, '@self']);
+  const b = await exportBackup(dbX, { deviceId: DEV_A, deviceName: 'laptop', now: T1 + 2000 });
+  const plan = await planBackupImport(dbY, b.text);
+  assert(plan.writes.atoms.every((a) => a._pack !== '@self'), 'self atoms travel as events, not items');
+  await commitBackupImport(dbY, plan);
+  await refreshDerived(dbY);
+  eq((await dbY.get('atoms', atom.id)).answer, 'fact');
+  dbX.close(); dbY.close();
+  await deleteDB('smriti-selftest-x');
+  await deleteDB('smriti-selftest-y');
 });
 
 // ------------------------------------------------------------------ app shell

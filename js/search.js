@@ -29,10 +29,11 @@ export function buildIndex(nodes, content) {
   return ms;
 }
 
-export function runSearch(ms, q, limit = 40) {
+export function runSearch(ms, q, limit = 40, kinds = null) {
   const query = q.trim();
   if (!query) return [];
-  let hits = ms.search(query, { combineWith: 'AND' });
-  if (!hits.length) hits = ms.search(query);
+  const filter = kinds && kinds.length ? (r) => kinds.includes(r.kind) : undefined;
+  let hits = ms.search(query, { combineWith: 'AND', filter });
+  if (!hits.length) hits = ms.search(query, { filter });
   return hits.slice(0, limit).map((h) => ({ kind: h.kind, label: h.label, nodeId: h.nodeId, refId: h.refId, score: h.score }));
 }

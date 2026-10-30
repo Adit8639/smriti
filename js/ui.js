@@ -34,6 +34,8 @@ const ICONS = {
   data: '<ellipse cx="12" cy="5.5" rx="7.5" ry="3"/><path d="M4.5 5.5v13c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3v-13M4.5 12c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3" fill="none"/>',
   settings: '<circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1" fill="none"/>',
   chevron: '<path d="M9 6l6 6-6 6" fill="none"/>',
+  today: '<rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4M8.5 14.5l2.3 2.3 4.7-4.7" fill="none"/>',
+  book: '<path d="M4 5.5C4 4.7 4.7 4 5.5 4H11v16H5.5c-.8 0-1.5-.7-1.5-1.5zM20 5.5c0-.8-.7-1.5-1.5-1.5H13v16h5.5c.8 0 1.5-.7 1.5-1.5z"/>',
   search: '<circle cx="10.5" cy="10.5" r="6.5" fill="none"/><path d="M15.5 15.5L21 21" fill="none"/>',
   close: '<path d="M6 6l12 12M18 6L6 18" fill="none"/>',
 };
@@ -56,12 +58,15 @@ export function toast(message, { kind = 'info', ms = 4000 } = {}) {
   toastTimer = setTimeout(() => { el.hidden = true; }, ms);
 }
 
-// Bottom sheet. Returns {el, body, close}. actions: [{label, kind, onClick, disabled}]
-let openSheet = null;
+// Bottom sheets stack: a sheet opened from another (a picker inside a form) shows on top
+// and closing it returns to the one below. Returns {el, body, setActions, close}.
+// actions: [{label, kind, onClick, disabled}]
+const stack = [];
 export function sheet({ title, body, actions = [], onClose, wide = false }) {
-  if (openSheet) openSheet.close();
   const root = document.getElementById('sheet-root');
   const prevFocus = document.activeElement;
+  const below = stack[stack.length - 1];
+  if (below) below.backdrop.hidden = true;
   const bodyEl = h('div', { class: 'sheet-body' }, body);
   const bar = h('div', { class: 'sheet-actions' });
   const panel = h('div', { class: `sheet${wide ? ' wide' : ''}`, role: 'dialog', 'aria-modal': 'true', 'aria-label': title },
@@ -73,6 +78,7 @@ export function sheet({ title, body, actions = [], onClose, wide = false }) {
   const api = {
     el: panel,
     body: bodyEl,
+    backdrop,
     setActions(list) {
       clear(bar);
       for (const a of list) {
@@ -81,24 +87,33 @@ export function sheet({ title, body, actions = [], onClose, wide = false }) {
       bar.hidden = !list.length;
     },
     close() {
-      if (openSheet !== api) return;
-      openSheet = null;
+      const i = stack.indexOf(api);
+      if (i < 0) return;
+      stack.splice(i, 1);
       backdrop.remove();
-      document.body.classList.remove('sheet-open');
-      if (prevFocus && prevFocus.focus) prevFocus.focus();
+      const top = stack[stack.length - 1];
+      if (top) top.backdrop.hidden = false;
+      else document.body.classList.remove('sheet-open');
+      if (prevFocus && prevFocus.focus && document.contains(prevFocus)) prevFocus.focus();
       if (onClose) onClose();
     },
   };
   api.setActions(actions);
   root.append(backdrop);
   document.body.classList.add('sheet-open');
-  openSheet = api;
+  stack.push(api);
   const first = panel.querySelector('.sheet-actions .btn:not([disabled])') || panel.querySelector('button');
   if (first) first.focus();
   return api;
 }
 
-export const closeSheet = () => { if (openSheet) { openSheet.close(); return true; } return false; };
+export const closeSheet = () => {
+  const top = stack[stack.length - 1];
+  if (top) { top.close(); return true; }
+  return false;
+};
+
+export const sheetOpen = () => stack.length > 0;
 
 export function confirmSheet({ title, message, confirmLabel = 'OK', danger = false }) {
   return new Promise((resolve) => {

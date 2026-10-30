@@ -1,7 +1,7 @@
 // Boot, routing, bottom navigation, banners and keyboard shortcuts.
 
 import { h, clear, icon, toast, closeSheet, canShareFiles } from './ui.js';
-import { app, initStore, loadProfiles, loadNodes, loadDerived, applyDerived, subscribe, getSetting, setSetting } from './store.js';
+import { app, initStore, loadProfiles, loadNodes, loadDerived, applyDerived, subscribe, getSetting, setSetting, flushState } from './store.js';
 import { seedProfiles } from './profiles.js';
 import { registerSW, onPwaChange, pwa, applyUpdate, promptInstall, requestPersist } from './pwa.js';
 import { call } from './data.js';
@@ -11,18 +11,37 @@ import * as library from './view-library.js';
 import * as quarantine from './view-quarantine.js';
 import * as dataView from './view-data.js';
 import * as settings from './view-settings.js';
+import * as today from './view-today.js';
+import * as review from './view-review.js';
+import * as leech from './view-leech.js';
+import * as learn from './view-learn.js';
+import * as notes from './view-notes.js';
+import * as booklet from './view-booklet.js';
+import * as sources from './view-sources.js';
+import * as reader from './view-reader.js';
 
 const ROUTES = {
+  today: { view: today, title: 'Today', nav: 'today' },
+  review: { view: review, title: 'Review', nav: 'today' },
+  practice: { view: review, title: 'Practice', nav: 'library' },
+  quarantine: { view: quarantine, title: 'Quarantine', nav: 'today' },
+  leeches: { view: leech, title: 'Leeches', nav: 'today' },
+  rebuild: { view: leech, title: 'Rebuild', nav: 'today' },
   library: { view: library, title: 'Library', nav: 'library' },
   node: { view: library, title: 'Topic', nav: 'library' },
-  quarantine: { view: quarantine, title: 'Quarantine', nav: 'quarantine' },
+  learn: { view: learn, title: 'Learn Loop', nav: 'library' },
+  notes: { view: notes, title: 'Notes', nav: 'library' },
+  booklet: { view: booklet, title: 'Booklet', nav: 'library' },
+  sources: { view: sources, title: 'Sources', nav: 'sources' },
+  reader: { view: reader, title: 'Reader', nav: 'sources' },
   data: { view: dataView, title: 'Data', nav: 'data' },
   settings: { view: settings, title: 'Settings', nav: 'settings' },
 };
 
 const NAV = [
+  ['today', 'Today', 'today'],
   ['library', 'Library', 'library'],
-  ['quarantine', 'Quarantine', 'shield'],
+  ['sources', 'Sources', 'book'],
   ['data', 'Data', 'data'],
   ['settings', 'Settings', 'settings'],
 ];
@@ -35,7 +54,7 @@ function parseRoute() {
   const raw = location.hash.replace(/^#\/?/, '');
   const [path, query = ''] = raw.split('?');
   const [name, ...rest] = path.split('/');
-  const route = ROUTES[name] ? name : 'library';
+  const route = ROUTES[name] ? name : 'today';
   return { name: route, arg: rest.length ? decodeURIComponent(rest.join('/')) : null, query: new URLSearchParams(query) };
 }
 
@@ -48,20 +67,24 @@ function renderNav() {
     nav.append(h('a', { href: `#/${route}`, class: `nav-item${current === route ? ' active' : ''}`, 'aria-current': current === route ? 'page' : null },
       icon(ic),
       h('span', { class: 'nav-label', text: label }),
-      route === 'quarantine' && q ? h('span', { class: 'nav-badge', text: String(q), 'aria-label': `${q} waiting` }) : null));
+      route === 'today' && q ? h('span', { class: 'nav-badge', text: String(q), 'aria-label': `${q} atoms waiting in Quarantine` }) : null));
   }
 }
 
 let renderSeq = 0;
 let lastPath = null;
+let lastView = null;
 async function render() {
   const r = parseRoute();
   const def = ROUTES[r.name];
   const main = document.getElementById('view');
   const seq = ++renderSeq;
-  const path = `${r.name}/${r.arg || ''}`;
+  const path = `${r.name}/${r.arg || ''}?${r.query}`;
   const moved = path !== lastPath;
   lastPath = path;
+  // A view that holds a session or timers gets a chance to wrap up when you leave it.
+  if (moved && lastView && lastView.leave) lastView.leave();
+  lastView = def.view;
   document.getElementById('view-title').textContent = def.title;
   renderNav();
   try {
@@ -125,6 +148,7 @@ function isTyping(e) {
 function onKey(e) {
   if (e.key === 'Escape') { if (closeSheet()) e.preventDefault(); return; }
   if (isTyping(e) || e.ctrlKey || e.metaKey || e.altKey || document.body.classList.contains('sheet-open')) return;
+  if (document.body.classList.contains('focus')) return;
   if (e.key === '/') {
     e.preventDefault();
     if (parseRoute().name !== 'library') location.hash = '#/library';
@@ -191,12 +215,15 @@ async function boot() {
     bootProblems.push(`Could not rebuild the cache: ${e.message}`);
   }
 
-  // 'derived' = content or caches changed (imports, uninstalls, exports): redraw the view.
+  // 'derived' = content or caches changed (imports, uninstalls, exports): redraw the view,
+  // except during a focus-mode session, which manages its own screen.
   subscribe((what) => {
-    renderNav();
-    renderBanners();
-    if (what === 'derived' || what === 'rerender') render();
+    const focus = document.body.classList.contains('focus');
+    // During a focus-mode session the bar and banners are hidden: skip redrawing them per answer.
+    if (!focus || what !== 'state') { renderNav(); renderBanners(); }
+    if (what === 'rerender' || (what === 'derived' && !focus)) render();
   });
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushState(); });
   window.addEventListener('hashchange', render);
   renderBanners();
   await render();
