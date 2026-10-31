@@ -2,7 +2,7 @@
 // calibration report with a score projection, the Trap Log and the CSAT Gym.
 // #/lab?tab=pyqs|mocks|calib|traps|csat
 
-import { h, clear, toast, sheet } from './ui.js';
+import { h, add, clear, toast, sheet } from './ui.js';
 import { app, allNodes, activeProfile, appendEvents } from './store.js';
 import { call } from './data.js';
 import { FORMAT_LABEL } from './probes.js';
@@ -91,7 +91,7 @@ async function pyqTab(body) {
     if (rows.length > shown) list.append(h('button', { class: 'btn block-btn', type: 'button', onclick: () => { shown += 60; draw(); } }, `Show more (${rows.length - shown} left)`));
     if (!rows.length) list.append(h('p', { class: 'muted', text: data.rows.length ? 'No PYQ matches these filters.' : 'No objective PYQs installed yet. Forge PYQ packs with F2 (one paper per run) and import them in Data. The demo pack has 5.' }));
   }
-  clear(body).append(
+  add(clear(body),
     h('section', { class: 'card' },
       h('h2', { text: 'PYQ Spine' }),
       h('p', { class: 'small muted', text: 'Practise PYQs by year, subject or format. Mark each statement before choosing an option; misses ask for a cause, and the explanation shows trap tags, the elimination path and the atoms to review.' }),
@@ -257,7 +257,7 @@ async function trapTab(body) {
       ex.length ? h('ul', { class: 'plain small' }, ex.map((t) => h('li', { text: t }))) : null,
       h('a', { class: 'btn small', href: `#/practice/traps?tags=${encodeURIComponent(tag)}` }, 'Drill this trap')));
   }
-  clear(body).append(
+  add(clear(body),
     h('section', { class: 'card' },
       h('h2', { text: 'Trap Log' }),
       h('p', { class: 'small muted', text: 'Misses tagged "Misread" or "Trap word" land here with their trap tag. The drill serves statements built on your top traps, mixed with true ones.' }),

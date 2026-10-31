@@ -1,6 +1,6 @@
 {
   "id": "cse-2028",
-  "version": 2,
+  "version": 3,
   "exam": "cse",
   "name": "UPSC CSE 2028",
   "subtitle": "Optional: Anthropology (Papers I and II)",
@@ -25,17 +25,36 @@
     {
       "id": "foundation",
       "name": "Foundation",
-      "until": "2028-01-31"
+      "until": "2028-01-31",
+      "weights": {
+        "prelims": 0.5,
+        "mains": 0.5
+      },
+      "pause": []
     },
     {
       "id": "prelims",
       "name": "Prelims focus",
-      "until": "@prelims"
+      "until": "@prelims",
+      "weights": {
+        "prelims": 0.85,
+        "mains": 0.15
+      },
+      "pause": [
+        "mains"
+      ]
     },
     {
       "id": "mains",
       "name": "Mains",
-      "until": "@mains"
+      "until": "@mains",
+      "weights": {
+        "prelims": 0.1,
+        "mains": 0.9
+      },
+      "pause": [
+        "prelims"
+      ]
     }
   ],
   "targets": {

@@ -28,6 +28,12 @@ function append(el, children) {
 
 export const clear = (el) => { while (el.firstChild) el.firstChild.remove(); return el; };
 
+// Element.append without the "null" and "false" text: skips empty children, flattens arrays.
+export function add(el, ...kids) {
+  append(el, kids);
+  return el;
+}
+
 const ICONS = {
   library: '<path d="M4 4h4v16H4zM10 4h4v16h-4zM16.5 4.6l3.8 1 -3.9 14.6 -3.8-1z"/>',
   shield: '<path d="M12 2l8 3v6c0 5-3.4 9.4-8 11-4.6-1.6-8-6-8-11V5z"/><path d="M8.5 12l2.5 2.5 4.5-5" fill="none"/>',

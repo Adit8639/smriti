@@ -28,6 +28,11 @@ import * as more from './view-more.js';
 import * as mains from './view-mains.js';
 import * as caView from './view-ca.js';
 import * as intake from './view-intake.js';
+import * as weekly from './view-weekly.js';
+import * as commute from './view-commute.js';
+import * as mapLab from './view-map.js';
+import * as timeline from './view-timeline.js';
+import * as health from './view-health.js';
 
 const ROUTES = {
   today: { view: today, title: 'Today', nav: 'today' },
@@ -49,7 +54,12 @@ const ROUTES = {
   ca: { view: caView, title: 'CA–Static Bridge', nav: 'labs' },
   intake: { view: intake, title: 'Intake', nav: 'labs' },
   triage: { view: intake, title: 'Triage', nav: 'labs' },
+  commute: { view: commute, title: 'Commute', nav: 'labs' },
+  map: { view: mapLab, title: 'Map Lab', nav: 'labs' },
+  timeline: { view: timeline, title: 'Timeline Lab', nav: 'labs' },
   progress: { view: progress, title: 'Progress', nav: 'progress' },
+  weekly: { view: weekly, title: 'Weekly review', nav: 'progress' },
+  health: { view: health, title: 'Data health', nav: 'more' },
   more: { view: more, title: 'More', nav: 'more' },
   sources: { view: sources, title: 'Sources', nav: 'more' },
   reader: { view: reader, title: 'Reader', nav: 'more' },

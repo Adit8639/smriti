@@ -1,0 +1,606 @@
+{
+  "pack": {
+    "id": "demo-places-dates",
+    "version": 1,
+    "kind": "book",
+    "exam": [
+      "cse"
+    ],
+    "title": "Demo: places and dates",
+    "createdAt": "2026-10-30",
+    "source": {
+      "title": "Demo Source: places and dates",
+      "edition": "1",
+      "pages": "1-12"
+    },
+    "report": {
+      "counts": {
+        "atoms": 25,
+        "probes": 2
+      },
+      "doubts": [
+        "Coordinates are approximate centre points, accurate enough for map drills.",
+        "\"Demo Source: places and dates\" is fictional; its page numbers exist only so every atom has a source page."
+      ],
+      "unmapped": [],
+      "skipped": [],
+      "nodeCounts": {}
+    }
+  },
+  "atoms": [
+    {
+      "id": "demo-places-dates.0001",
+      "type": "map",
+      "text": "___ National Park in Assam is famous for the one-horned rhinoceros.",
+      "answer": "Kaziranga",
+      "nodes": [
+        "cse.gs3.environment",
+        "cse.gs1.geography"
+      ],
+      "source": {
+        "pack": "demo-places-dates",
+        "page": 1
+      },
+      "origin": "source",
+      "verify": false,
+      "stage": [
+        "prelims"
+      ],
+      "geo": {
+        "lat": 26.58,
+        "lon": 93.17
+      }
+    },
+    {
+      "id": "demo-places-dates.0002",
+      "type": "map",
+      "text": "India's first national park, set up in 1936 as Hailey National Park, is now called ___ National Park.",
+      "answer": "Jim Corbett",
+      "nodes": [
+        "cse.gs3.environment"
+      ],
+      "source": {
+        "pack": "demo-places-dates",
+        "page": 1
+      },
+      "origin": "source",
+      "verify": false,
+      "stage": [
+        "prelims"
+      ],
+      "geo": {
+        "lat": 29.53,
+        "lon": 78.77
+      }
+    },
+    {
+      "id": "demo-places-dates.0003",
+      "type": "map",
+      "text": "___ National Park at Bharatpur in Rajasthan is a World Heritage Site known for migratory birds.",
+      "answer": "Keoladeo",
+      "nodes": [
+        "cse.gs3.environment"
+      ],
+      "source": {
+        "pack": "demo-places-dates",
+        "page": 2
+      },
+      "origin": "source",
+      "verify": false,
+      "stage": [
+        "prelims"
+      ],
+      "geo": {
+        "lat": 27.17,
+        "lon": 77.52
+      }
+    },
+    {
+      "id": "demo-places-dates.0004",
+      "type": "map",
+      "text": "The ___ in West Bengal, shared with Bangladesh, form the largest mangrove forest in the world.",
+      "answer": "Sundarbans",
+      "nodes": [
+        "cse.gs3.environment",
+        "cse.gs1.geography"
+      ],
+      "source": {
+        "pack": "demo-places-dates",
+        "page": 2
+      },
+      "origin": "source",
+      "verify": false,
+      "stage": [
+        "prelims"
+      ],
+      "geo": {
+        "lat": 21.94,
+        "lon": 88.9
+      }
+    },
+    {
+      "id": "demo-places-dates.0005",
+      "type": "map",
+      "text": "___ Lake in Odisha is the largest coastal lagoon in India.",
+      "answer": "Chilika",
+      "nodes": [
+        "cse.gs1.geography",
+        "cse.gs3.environment"
+      ],
+      "source": {
+        "pack": "demo-places-dates",
+        "page": 3
+      },
+      "origin": "source",
+      "verify": false,
+      "stage": [
+        "prelims"
+      ],
+      "geo": {
+        "lat": 19.72,
+        "lon": 85.32
+      },
+      "confusables": [
+        "demo-places-dates.0009"
+      ]
+    },
+    {
+      "id": "demo-places-dates.0006",
+      "type": "map",
+      "text": "Keibul Lamjao, the world's only floating national park, is on ___ Lake in Manipur.",
+      "answer": "Loktak",
+      "nodes": [
+        "cse.gs3.environment"
+      ],
+      "source": {
+        "pack": "demo-places-dates",
+        "page": 3
+      },
+      "origin": "source",
+      "verify": false,
+      "stage": [
+        "prelims"
+      ],
+      "geo": {
+        "lat": 24.55,
+        "lon": 93.79
+      }
+    },
+    {
+      "id": "demo-places-dates.0007",
+      "type": "map",
+      "text": "The ___ forest in Gujarat is the only wild home of the Asiatic lion.",
+      "answer": "Gir",
+      "nodes": [
+        "cse.gs3.environment"
+      ],
+      "source": {
+        "pack": "demo-places-dates",
+        "page": 4
+      },
+      "origin": "source",
+      "verify": false,
+      "stage": [
+        "prelims"
+      ],
+      "geo": {
+        "lat": 21.12,
+        "lon": 70.82
+      }
+    },
+    {
+      "id": "demo-places-dates.0008",
+      "type": "map",
+      "text": "___ Lake in Jammu and Kashmir, fed by the Jhelum, is one of the largest freshwater lakes in Asia.",
+      "answer": "Wular",
+      "nodes": [
+        "cse.gs1.geography"
+      ],
+      "source": {
+        "pack": "demo-places-dates",
+        "page": 4
+      },
+      "origin": "source",
+      "verify": false,
+      "stage": [
+        "prelims"
+      ],
+      "geo": {
+        "lat": 34.36,
+        "lon": 74.6
+      }
+    },
+    {
+      "id": "demo-places-dates.0009",
+      "type": "map",
+      "text": "___ Lake in Rajasthan is India's largest inland salt lake.",
+      "answer": "Sambhar",
+      "nodes": [
+        "cse.gs1.geography"
+      ],
+      "source": {
+        "pack": "demo-places-dates",
+        "page": 5
+      },
+      "origin": "source",
+      "verify": false,
+      "stage": [
+        "prelims"
+      ],
+      "geo": {
+        "lat": 26.97,
+        "lon": 75.09
+      },
+      "confusables": [
+        "demo-places-dates.0005"
+      ]
+    },
+    {
+      "id": "demo-places-dates.0010",
+      "type": "map",
+      "text": "___ National Park in Kerala's Nilgiri hills is known for the lion-tailed macaque.",
+      "answer": "Silent Valley",
+      "nodes": [
+        "cse.gs3.environment"
+      ],
+      "source": {
+        "pack": "demo-places-dates",
+        "page": 5
+      },
+      "origin": "source",
+      "verify": false,
+      "stage": [
+        "prelims"
+      ],
+      "geo": {
+        "lat": 11.08,
+        "lon": 76.44
+      }
+    },
+    {
+      "id": "demo-places-dates.0011",
+      "type": "map",
+      "text": "___ Tiger Reserve lies around the lake at Thekkady in Kerala.",
+      "answer": "Periyar",
+      "nodes": [
+        "cse.gs3.environment"
+      ],
+      "source": {
+        "pack": "demo-places-dates",
+        "page": 6
+      },
+      "origin": "source",
+      "verify": false,
+      "stage": [
+        "prelims"
+      ],
+      "geo": {
+        "lat": 9.47,
+        "lon": 77.14
+      }
+    },
+    {
+      "id": "demo-places-dates.0012",
+      "type": "map",
+      "text": "___ in Assam, on the Brahmaputra, is the largest river island in India.",
+      "answer": "Majuli",
+      "nodes": [
+        "cse.gs1.geography"
+      ],
+      "source": {
+        "pack": "demo-places-dates",
+        "page": 6
+      },
+      "origin": "source",
+      "verify": false,
+      "stage": [
+        "prelims"
+      ],
+      "geo": {
+        "lat": 26.95,
+        "lon": 94.17
+      }
+    },
+    {
+      "id": "demo-places-dates.0013",
+      "type": "map",
+      "text": "The Strait of ___ links the Persian Gulf with the Gulf of Oman.",
+      "answer": "Hormuz",
+      "nodes": [
+        "cse.gs1.geography",
+        "cse.gs2.ir"
+      ],
+      "source": {
+        "pack": "demo-places-dates",
+        "page": 7
+      },
+      "origin": "source",
+      "verify": false,
+      "stage": [
+        "prelims"
+      ],
+      "geo": {
+        "lat": 26.57,
+        "lon": 56.25
+      }
+    },
+    {
+      "id": "demo-places-dates.0014",
+      "type": "map",
+      "text": "The Strait of ___ separates the Malay Peninsula from Sumatra.",
+      "answer": "Malacca",
+      "nodes": [
+        "cse.gs1.geography",
+        "cse.gs2.ir"
+      ],
+      "source": {
+        "pack": "demo-places-dates",
+        "page": 7
+      },
+      "origin": "source",
+      "verify": false,
+      "stage": [
+        "prelims"
+      ],
+      "geo": {
+        "lat": 2.5,
+        "lon": 101.4
+      }
+    },
+    {
+      "id": "demo-places-dates.0015",
+      "type": "map",
+      "text": "The ___ strait joins the Red Sea to the Gulf of Aden.",
+      "answer": "Bab-el-Mandeb",
+      "nodes": [
+        "cse.gs1.geography",
+        "cse.gs2.ir"
+      ],
+      "source": {
+        "pack": "demo-places-dates",
+        "page": 7
+      },
+      "origin": "source",
+      "verify": false,
+      "stage": [
+        "prelims"
+      ],
+      "geo": {
+        "lat": 12.58,
+        "lon": 43.33
+      }
+    },
+    {
+      "id": "demo-places-dates.0016",
+      "type": "date",
+      "text": "The Battle of Plassey was fought in ___.",
+      "answer": "1757",
+      "nodes": [
+        "cse.gs1.history"
+      ],
+      "source": {
+        "pack": "demo-places-dates",
+        "page": 8
+      },
+      "origin": "source",
+      "verify": false,
+      "stage": [
+        "prelims"
+      ]
+    },
+    {
+      "id": "demo-places-dates.0017",
+      "type": "date",
+      "text": "The Indian National Congress held its first session, in Bombay, in ___.",
+      "answer": "1885",
+      "nodes": [
+        "cse.gs1.history"
+      ],
+      "source": {
+        "pack": "demo-places-dates",
+        "page": 8
+      },
+      "origin": "source",
+      "verify": false,
+      "stage": [
+        "prelims"
+      ]
+    },
+    {
+      "id": "demo-places-dates.0018",
+      "type": "date",
+      "text": "Lord Curzon partitioned Bengal in ___.",
+      "answer": "1905",
+      "nodes": [
+        "cse.gs1.history"
+      ],
+      "source": {
+        "pack": "demo-places-dates",
+        "page": 9
+      },
+      "origin": "source",
+      "verify": false,
+      "stage": [
+        "prelims"
+      ]
+    },
+    {
+      "id": "demo-places-dates.0019",
+      "type": "date",
+      "text": "The Jallianwala Bagh massacre took place in Amritsar in ___.",
+      "answer": "1919",
+      "nodes": [
+        "cse.gs1.history"
+      ],
+      "source": {
+        "pack": "demo-places-dates",
+        "page": 9
+      },
+      "origin": "source",
+      "verify": false,
+      "stage": [
+        "prelims"
+      ]
+    },
+    {
+      "id": "demo-places-dates.0020",
+      "type": "date",
+      "text": "The Non-Cooperation Movement was launched in ___.",
+      "answer": "1920",
+      "nodes": [
+        "cse.gs1.history"
+      ],
+      "source": {
+        "pack": "demo-places-dates",
+        "page": 10
+      },
+      "origin": "source",
+      "verify": false,
+      "stage": [
+        "prelims"
+      ]
+    },
+    {
+      "id": "demo-places-dates.0021",
+      "type": "date",
+      "text": "The Simon Commission arrived in India in ___.",
+      "answer": "1928",
+      "nodes": [
+        "cse.gs1.history"
+      ],
+      "source": {
+        "pack": "demo-places-dates",
+        "page": 10
+      },
+      "origin": "source",
+      "verify": false,
+      "stage": [
+        "prelims"
+      ]
+    },
+    {
+      "id": "demo-places-dates.0022",
+      "type": "date",
+      "text": "Gandhi began the Dandi March in ___.",
+      "answer": "1930",
+      "nodes": [
+        "cse.gs1.history"
+      ],
+      "source": {
+        "pack": "demo-places-dates",
+        "page": 11
+      },
+      "origin": "source",
+      "verify": false,
+      "stage": [
+        "prelims"
+      ]
+    },
+    {
+      "id": "demo-places-dates.0023",
+      "type": "date",
+      "text": "The Government of India Act was passed in ___.",
+      "answer": "1935",
+      "nodes": [
+        "cse.gs1.history"
+      ],
+      "source": {
+        "pack": "demo-places-dates",
+        "page": 11
+      },
+      "origin": "source",
+      "verify": false,
+      "stage": [
+        "prelims"
+      ]
+    },
+    {
+      "id": "demo-places-dates.0024",
+      "type": "date",
+      "text": "The Quit India Movement was launched in ___.",
+      "answer": "1942",
+      "nodes": [
+        "cse.gs1.history"
+      ],
+      "source": {
+        "pack": "demo-places-dates",
+        "page": 12
+      },
+      "origin": "source",
+      "verify": false,
+      "stage": [
+        "prelims"
+      ]
+    },
+    {
+      "id": "demo-places-dates.0025",
+      "type": "date",
+      "text": "The Constitution of India came into force on 26 January ___.",
+      "answer": "1950",
+      "nodes": [
+        "cse.gs1.history"
+      ],
+      "source": {
+        "pack": "demo-places-dates",
+        "page": 12
+      },
+      "origin": "source",
+      "verify": false,
+      "stage": [
+        "prelims"
+      ]
+    }
+  ],
+  "probes": [
+    {
+      "id": "demo-places-dates.p001",
+      "atoms": [
+        "demo-places-dates.0001",
+        "demo-places-dates.0007",
+        "demo-places-dates.0010",
+        "demo-places-dates.0003"
+      ],
+      "format": "match",
+      "stem": "Match each protected area with its State:",
+      "pairs": [
+        [
+          "Kaziranga National Park",
+          "Assam"
+        ],
+        [
+          "Gir National Park",
+          "Gujarat"
+        ],
+        [
+          "Silent Valley National Park",
+          "Kerala"
+        ],
+        [
+          "Keoladeo National Park",
+          "Rajasthan"
+        ]
+      ],
+      "explanation": "Kaziranga is in Assam, Gir in Gujarat, Silent Valley in Kerala and Keoladeo (Bharatpur) in Rajasthan.",
+      "difficulty": 1
+    },
+    {
+      "id": "demo-places-dates.p002",
+      "atoms": [
+        "demo-places-dates.0018",
+        "demo-places-dates.0019",
+        "demo-places-dates.0021",
+        "demo-places-dates.0022"
+      ],
+      "format": "order",
+      "stem": "Arrange these events in chronological order:",
+      "items": [
+        "Partition of Bengal",
+        "Jallianwala Bagh massacre",
+        "Arrival of the Simon Commission",
+        "Dandi March"
+      ],
+      "explanation": "Partition of Bengal 1905, Jallianwala Bagh 1919, Simon Commission 1928, Dandi March 1930.",
+      "difficulty": 1
+    }
+  ]
+}

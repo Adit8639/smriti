@@ -32,6 +32,11 @@ import { rng } from '../js/rng.js';
 import { detectDirective, normalizeDim, dimensionOverlap, skeletonDiff, precisCheck, answerLimits, mainsQuestions, valueAddCategory, DIRECTIVES, rubricTotal } from '../js/mains.js';
 import { sentences, scoreSentence, extractCandidates, dupIndex, caShelfFor } from '../js/intake.js';
 import { archiveDay } from '../js/queue.js';
+import { buildMission, blockDone, dayActivity, dayCounts, streak, nodePriorities, examForecast, phaseRules, phiFor, stageOf } from '../js/mission.js';
+import { project, unproject, haversineKm } from '../js/maps.js';
+import { eventLabel } from '../js/view-timeline.js';
+import { niceMax } from '../js/charts.js';
+import { addDays } from '../js/util.js';
 
 const tests = [];
 const test = (group, name, fn) => tests.push({ group, name, fn });
@@ -1156,6 +1161,118 @@ test('CA Bridge', 'rebuild: anchors, month reconciliation, intake swipes, rule a
   eq([s.intake.B.kept, s.intake.B.discarded, s.intake.B.revealed], [1, 1, 2]);
   eq([s.mains.attempts.A1.total, s.mains.attempts.S1.headings, s.mains.counts.answer, s.mains.byNode.n1], [9, 1, 1, 2]);
   eq([s.mains.drill.n, s.mains.drill.right], [2, 1]);
+});
+
+// ------------------------------------------------------------------ Phase 6: planner, dashboard, labs
+
+test('Planner', 'acceptance: missions for 3 hours and for 15 minutes', () => {
+  const rules = phaseRules({ id: 'foundation', name: 'Foundation' });
+  const full = buildMission({ minutes: 180, date: '2026-11-02', rules, topNode: 'n1', hasCa: true, reviewCap: 200, dueCount: 80 });
+  eq(full.blocks.map((b) => b.kind), ['reviews', 'learn', 'pyq', 'writing', 'ca', 'close']);
+  const total = full.blocks.reduce((a, b) => a + b.minutes, 0);
+  assert(Math.abs(total - 180) <= 15, `3-hour mission adds up (${total})`);
+  eq(full.blocks.find((b) => b.kind === 'learn').target.nodeId, 'n1');
+  eq(full.blocks.find((b) => b.kind === 'reviews').target.reviews, 80, 'reviews capped by what is due');
+  const min = buildMission({ minutes: 15, date: '2026-11-02', rules, reviewCap: 200, dueCount: 40 });
+  eq([min.minimum, min.blocks.map((b) => b.kind), min.blocks.find((b) => b.kind === 'statements').target.statements], [true, ['reviews', 'statements'], 10]);
+  // Prelims focus: the writing block (Mains) is paused; Mains phase: the PYQ block shrinks away.
+  const pre = buildMission({ minutes: 180, date: '2026-11-02', rules: phaseRules({ id: 'prelims' }), topNode: 'n1', hasCa: true });
+  assert(!pre.blocks.some((b) => b.kind === 'writing'), 'no writing block in Prelims focus');
+  const mains = buildMission({ minutes: 180, date: '2026-11-02', rules: phaseRules({ id: 'mains' }), topNode: 'n1', hasCa: true });
+  assert(!mains.blocks.some((b) => b.kind === 'pyq') && mains.blocks.some((b) => b.kind === 'writing'), 'Mains phase: writing, no PYQ block');
+  const short = buildMission({ minutes: 40, date: '2026-11-02', rules, topNode: 'n1', hasCa: true });
+  assert(!short.blocks.some((b) => b.kind === 'learn' || b.kind === 'writing'), 'a short day drops the long blocks');
+});
+
+test('Planner', 'block progress and the streak (one forgiven miss a week)', () => {
+  const act = { reviews: 25, statements: 12, pyqs: 12, ca: 3, loops: 1, sprints: 2, answers: 0, active: 20 * 60000 };
+  eq(blockDone({ kind: 'reviews', target: { reviews: 20 } }, act), true);
+  eq(blockDone({ kind: 'pyq', target: { pyqs: 15 } }, act), false);
+  eq(blockDone({ kind: 'writing', target: { sprints: 3 } }, act), false);
+  eq(blockDone({ kind: 'close' }, act, { closed: true }), true);
+  eq([dayCounts({ statements: 10, reviews: 1, active: 0 }), dayCounts({ statements: 3, reviews: 40, active: 5 * 60000 }), dayCounts({ statements: 0, reviews: 0, active: 16 * 60000 })], [true, false, true]);
+  const done = new Set(['2026-11-01', '2026-10-31', '2026-10-30', '2026-10-28', '2026-10-27', '2026-10-26', '2026-10-24']);
+  const has = (d) => done.has(d);
+  // 29 Oct missed (forgiven), 25 Oct missed again within 7 days: the streak stops there.
+  eq(streak(has, '2026-11-01'), 6);
+  eq(streak(has, '2026-11-02'), 6, 'today not yet done: counts to yesterday');
+  const two = new Set(['2026-11-01', '2026-10-29']);
+  eq(streak((d) => two.has(d), '2026-11-01'), 1, 'two misses in a row end it');
+  const st = { days: { '2026-11-01': { rev: 4, stmt: 11, active: 600000, loops: 0, writes: 0 } }, objective: [], atoms: {}, mains: { attempts: {} } };
+  eq(dayActivity(st, '2026-11-01').statements, 11);
+});
+
+test('Planner', 'node priority P(n) = W × (1 − R̄) × (1 + 0.2c) × φ, and the exam-day forecast', () => {
+  const now = Date.UTC(2026, 10, 1);
+  const exam = Date.UTC(2028, 4, 28);
+  const card = fsrsReview(fsrsReview(undefined, now - 90 * 86400000, 4), now - 20 * 86400000, 4);
+  const state = { atoms: { a1: { card }, b1: {}, c1: {} }, confusions: { 'b1|c1': { a: 'b1', b: 'c1', contrast: { status: 'open' } } } };
+  const topics = [
+    { id: 'learned', atoms: [{ id: 'a1', stage: ['prelims'] }], pyqW: 6 },
+    { id: 'heavy', atoms: [{ id: 'b1', stage: ['prelims'] }], pyqW: 6 },
+    { id: 'light', atoms: [{ id: 'c1', stage: ['prelims'] }], pyqW: 1 },
+    { id: 'mains', atoms: [{ id: 'm1', stage: ['mains'] }], pyqW: 9 },
+  ];
+  const pre = nodePriorities({ topics, state, examMs: exam, rules: phaseRules({ id: 'prelims' }) });
+  eq([pre[0].nodeId, pre[pre.length - 1].nodeId], ['heavy', 'mains'], 'unlearned high-weight topic first, paused topic last');
+  const learned = pre.find((p) => p.nodeId === 'learned');
+  eq(learned.P, Math.round(learned.W * (1 - learned.R) * 1000) / 1000, 'a learned topic drops by its predicted recall');
+  const heavy = pre.find((p) => p.nodeId === 'heavy');
+  eq([heavy.W, heavy.R, heavy.c, heavy.phi], [6.25, 0, 1, 1]);
+  eq(heavy.P, Math.round(6.25 * 1 * 1.2 * 1 * 1000) / 1000);
+  eq(pre.find((p) => p.nodeId === 'mains').P, 0, 'Mains-only topics pause in Prelims focus');
+  assert(pre.find((p) => p.nodeId === 'learned').R > 0, 'a reviewed topic has some predicted recall on exam day');
+  eq([stageOf([{ stage: ['prelims'] }, { stage: ['mains'] }]), phiFor('mains', phaseRules({ id: 'foundation' }))], ['both', 1]);
+  const fc = examForecast({ atoms: [{ id: 'a1', stage: ['prelims'] }, { id: 'b1' }, { id: 'm1', stage: ['mains'] }], state, examMs: now + 5 * 86400000 });
+  eq([fc.n, fc.ok], [2, 1]);
+});
+
+test('Map Lab', 'projection round-trips, distances in km', () => {
+  const india = { proj: { lon0: 66, latTop: 38.5, k: Math.cos((22 * Math.PI) / 180), s: 20 }, w: 620, h: 670 };
+  const p = project(india, 26.58, 93.17);
+  const back = unproject(india, p.x, p.y);
+  eq([Math.round(back.lat * 1000) / 1000, Math.round(back.lon * 1000) / 1000], [26.58, 93.17]);
+  const km = haversineKm({ lat: 28.61, lon: 77.21 }, { lat: 19.08, lon: 72.88 });
+  assert(Math.abs(km - 1148) < 6, `Delhi to Mumbai about 1,148 km (${Math.round(km)})`);
+});
+
+test('Timeline Lab', 'event labels drop the blank; axes round up', () => {
+  eq(eventLabel({ text: 'The Battle of Plassey was fought in ___.' }), 'The Battle of Plassey was fought');
+  eq(eventLabel({ text: 'The Constitution of India came into force on 26 January ___.' }), 'The Constitution of India came into force');
+  eq([niceMax(8.4), niceMax(73), niceMax(180), niceMax(0)], [10, 100, 200, 1]);
+});
+
+test('Planner', 'rebuild: missions (first plan wins, re-plan replaces), skips, swaps, day counters', () => {
+  let t = new Date(2026, 10, 2, 9).getTime();
+  const ev = (type, payload) => makeEvent(type, payload, 'D1', (t += 60000));
+  const s = rebuild([
+    ev('mission.planned', { date: '2026-11-02', blocks: [{ id: 'reviews', kind: 'reviews', minutes: 20 }] }),
+    ev('mission.planned', { date: '2026-11-02', blocks: [{ id: 'learn', kind: 'learn', minutes: 60 }] }),
+    ev('mission.skip', { date: '2026-11-02', block: 'reviews', reason: 'tired' }),
+    ev('mission.swap', { date: '2026-11-02', block: 'reviews', to: 'commute' }),
+    ev('mission.closed', { date: '2026-11-02' }),
+    ev('session.started', { sessionId: 'S', kind: 'review' }),
+    ev('review.done', { atomId: 'a1', probeId: 'auto:a1', format: 'cloze', mode: 'review', correct: true, ms: 4000, rating: 3, sessionId: 'S' }),
+    ev('review.done', { atomId: null, probeId: 'stmt:p1#0', format: 'tf', mode: 'practice', correct: true, ms: 3000, sessionId: 'S' }),
+    ev('weekly.done', { week: '2026-10-26', notes: 'More maps' }),
+  ]);
+  const m = s.missions['2026-11-02'];
+  eq([m.blocks[0].kind, m.skips.reviews, m.swaps.reviews, m.closed], ['reviews', 'tired', 'commute', true]);
+  const day = s.days['2026-11-02'];
+  eq([day.rev, day.stmt, day.active], [1, 1, 7000]);
+  eq(s.weekly['2026-10-26'].notes, 'More maps');
+  const s2 = rebuild([ev('mission.planned', { date: '2026-11-03', blocks: [{ id: 'a', kind: 'reviews' }] }), ev('mission.planned', { date: '2026-11-03', blocks: [{ id: 'b', kind: 'learn' }], replace: true })]);
+  eq(s2.missions['2026-11-03'].blocks[0].id, 'b');
+});
+
+test('Planner', 'queue: the phase calendar pauses a stage', () => {
+  const atoms = [{ id: 'p', text: 'x ___', answer: 'y', nodes: ['n'], stage: ['prelims'] }, { id: 'm', text: 'x ___', answer: 'y', nodes: ['n'], stage: ['mains'] }, { id: 'b', text: 'x ___', answer: 'y', nodes: ['n'] }];
+  const st = rebuild([]);
+  const base = { atoms, state: st, now: Date.now(), dayStart: Date.now() - 1000, dayEnd: Date.now() + 86400000, profile: null, limits: { newPerDay: 10, reviewCap: 100 }, nodeOrder: new Map() };
+  const ids = (q) => q.items.map((x) => x.atomId).sort();
+  eq(ids(buildQueue({ ...base, rules: phaseRules({ id: 'foundation' }) })), ['b', 'm', 'p']);
+  eq(ids(buildQueue({ ...base, rules: phaseRules({ id: 'prelims' }) })), ['b', 'p']);
+  eq(ids(buildQueue({ ...base, rules: phaseRules({ id: 'mains' }) })), ['b', 'm']);
 });
 
 // ------------------------------------------------------------------ app shell

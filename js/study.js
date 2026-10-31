@@ -4,6 +4,9 @@ import { app, activeProfile } from './store.js';
 import { call } from './data.js';
 import * as clock from './clock.js';
 import { reviewCapFor, DEFAULT_NEW } from './queue.js';
+import { phaseOn } from './profiles.js';
+import { phaseRules } from './mission.js';
+import { localDate } from './util.js';
 
 const WEEK = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 
@@ -32,7 +35,9 @@ export async function buildQueueNow() {
   await app.synced;
   const now = clock.now();
   const { dayStart, dayEnd } = dayBounds(now);
-  return call('queue.build', { now, dayStart, dayEnd, profile: activeProfile(), limits: limits(now) });
+  const profile = activeProfile();
+  const rules = profile ? phaseRules(phaseOn(profile, localDate(now))) : null;
+  return call('queue.build', { now, dayStart, dayEnd, profile, limits: limits(now), rules });
 }
 
 // Answer-producing time vs total time for today's sessions.
@@ -46,4 +51,10 @@ export function activeToday(ms = clock.now()) {
     total += Math.max(0, s.end - s.start);
   }
   return { active, total, ratio: total > 0 ? Math.min(1, active / total) : null };
+}
+
+// The active phase's rules: weights and paused stages (see mission.js).
+export function currentRules(ms = clock.now()) {
+  const profile = activeProfile();
+  return profile ? phaseRules(phaseOn(profile, localDate(ms))) : phaseRules(null);
 }

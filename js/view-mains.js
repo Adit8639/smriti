@@ -1,7 +1,7 @@
 // Mains Studio. #/mains?tab=write|toolkit|valueadds|history, the flows under
 // #/mains/<flow> (see mains-flows.js) and saved attempts at #/mains/attempt/<id>.
 
-import { h, clear, toast } from './ui.js';
+import { h, add, clear, toast } from './ui.js';
 import { app, activeProfile, allNodes, appendEvents, emit } from './store.js';
 import { DIRECTIVES, DEFAULT_DIMENSIONS, VALUE_ADD_TYPES, VALUE_ADD_LABEL, valueAddCategory, normalizeValueAdd, RUBRIC, skeletonDiff, directiveName, bestModelAnswer, precisCheck } from './mains.js';
 import { dimensions, cap } from './mains-ui.js';
@@ -47,7 +47,7 @@ async function writeTab(body) {
   const card = (title, text, action, extra = null, count = 0) => h('section', { class: 'card lab-card' },
     h('div', { class: 'row-between' }, h('h2', { text: title }), count ? h('span', { class: 'badge', text: `${count} done` }) : null),
     h('p', { class: 'small muted', text }), extra, action);
-  body.append(
+  add(body,
     card('Skeleton Sprint', 'Questions back to back, 90 seconds each: an intro line, 4–6 dimension headings with one value-add each, and a way forward. Typed or dictated.',
       h('button', { class: 'btn primary', type: 'button', onclick: () => { location.hash = `#/mains/sprint?n=${nSel.value}`; } }, 'Start a sprint'), nSel, c.sprint),
     card('Timed answer', 'Write on paper against the clock (10 marks: 7 min, 150 words; 15 marks: 11 min, 250 words), photograph it, then self-score six lines of the rubric and compare with a model answer.',

@@ -15,6 +15,7 @@ export const DEFAULT_NEW = 30;
 
 export const isMainsOnly = (atom) => Array.isArray(atom.stage) && atom.stage.length > 0 && atom.stage.every((x) => x === 'mains');
 export const isPrelims = (atom) => !Array.isArray(atom.stage) || atom.stage.length === 0 || atom.stage.includes('prelims');
+export const isPrelimsOnly = (atom) => Array.isArray(atom.stage) && atom.stage.length > 0 && atom.stage.every((x) => x === 'prelims');
 
 const localMs = (iso) => {
   const [y, m, d] = iso.split('-').map(Number);
@@ -98,7 +99,11 @@ export function interleave(reviews, news) {
 
 // atoms: every atom (packs and self-made). state: rebuilt state. now/dayStart/dayEnd: ms.
 // limits: {newPerDay, reviewCap}. nodeOrder: Map nodeId -> tree position.
-export function buildQueue({ atoms, state, now, dayStart, dayEnd, profile, limits, nodeOrder, caShelf = null }) {
+export function buildQueue({ atoms, state, now, dayStart, dayEnd, profile, limits, nodeOrder, caShelf = null, rules = null }) {
+  // The phase calendar pauses a stage (Mains-only atoms in Prelims focus, Prelims-only
+  // atoms in the Mains phase); the 45-day exam window always pauses Mains-only atoms.
+  const pauseMainsPhase = !!(rules && rules.pause && rules.pause.includes('mains'));
+  const pausePrelimsPhase = !!(rules && rules.pause && rules.pause.includes('prelims'));
   const anchor = examAnchor(profile, dayStart);
   const forced = [];
   const learning = [];
@@ -109,6 +114,7 @@ export function buildQueue({ atoms, state, now, dayStart, dayEnd, profile, limit
   const atomById = new Map();
   let archived = 0;
   let mainsPaused = 0;
+  let prelimsPaused = 0;
   let quarantined = 0;
   let nextDue = null;
   const retention = state.settings.retention;
@@ -122,7 +128,8 @@ export function buildQueue({ atoms, state, now, dayStart, dayEnd, profile, limit
     if (rec && rec.retired) continue;
     if (rec && rec.suspended) { leeches.push(atom.id); continue; }
     if (isArchived(atom, dayStart, caShelf)) { archived++; continue; }
-    if (anchor && anchor.pauseMains && isMainsOnly(atom)) { mainsPaused++; continue; }
+    if (((anchor && anchor.pauseMains) || pauseMainsPhase) && isMainsOnly(atom)) { mainsPaused++; continue; }
+    if (pausePrelimsPhase && isPrelimsOnly(atom)) { prelimsPaused++; continue; }
     const node = (atom.nodes && atom.nodes[0]) || '';
     const card = rec && rec.card;
     const isForced = rec && rec.forcedDue && rec.forcedDue <= now && !(rec.lastTs && rec.lastTs >= rec.forcedDue);
@@ -197,7 +204,7 @@ export function buildQueue({ atoms, state, now, dayStart, dayEnd, profile, limit
       forced: forced.length, learning: learning.length, due: dueIn.length, dueTotal: due.length, overflow,
       new: news.length, newAvailable: newCands.length, newToday, newLimit: limits.newPerDay ?? DEFAULT_NEW,
       reviewsToday, cap, capacity, paused: overflow > 0 && newLimit > 0, contrasts: contrasts.length,
-      mainsPaused, archived, quarantined, total: items.length,
+      mainsPaused, prelimsPaused, archived, quarantined, total: items.length,
     },
     leeches,
     pending,

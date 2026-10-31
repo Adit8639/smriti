@@ -4,7 +4,7 @@
 // target from the CSAT paper. Nothing repeats within a set, and recent questions are
 // avoided across sets.
 
-import { h, clear, toast } from './ui.js';
+import { h, add, clear, toast } from './ui.js';
 import { app, activeProfile, appendEvents, flushState, emit } from './store.js';
 import { call } from './data.js';
 import { generateSet, CSAT_TYPES, CSAT_LABEL, LEVEL_LABEL } from './csat.js';
@@ -144,7 +144,7 @@ class Gym {
     this.drawOpts();
     clear(this.revealEl);
     this.revealEl.hidden = false;
-    this.revealEl.append(
+    add(this.revealEl,
       h('p', { class: `verdict ${correct ? 'right' : 'wrong'}`, text: skipped ? 'Skipped' : correct ? 'Correct' : 'Not quite' }),
       h('p', { class: 'small' }, h('span', { class: 'muted', text: 'Answer: ' }), `(${LETTERS[c.q.answer]}) ${c.q.options[c.q.answer]}`, h('span', { class: 'muted', text: ` · ${Math.round(c.ms / 1000)} s${c.ms > this.targetMs ? ' (over target)' : ''}` })),
       c.q.solution ? h('p', { class: 'pre solution' }, h('span', { class: 'muted', text: 'Solution: ' }), c.q.solution) : null);

@@ -1,6 +1,6 @@
 {
   "id": "capf-ac-2027",
-  "version": 1,
+  "version": 2,
   "exam": "capf-ac",
   "name": "UPSC CAPF AC 2027",
   "subtitle": "Assistant Commandants: Paper I (objective) and Paper II (descriptive), one day",
@@ -21,12 +21,22 @@
     {
       "id": "foundation",
       "name": "Foundation",
-      "until": "2027-03-31"
+      "until": "2027-03-31",
+      "weights": {
+        "prelims": 0.5,
+        "mains": 0.5
+      },
+      "pause": []
     },
     {
       "id": "exam",
       "name": "Exam focus",
-      "until": "@written"
+      "until": "@written",
+      "weights": {
+        "prelims": 0.5,
+        "mains": 0.5
+      },
+      "pause": []
     }
   ],
   "targets": {

@@ -1,7 +1,7 @@
 // SMRITI service worker: versioned, cache-first app shell. Bump VERSION on every release
 // (it must equal APP_VERSION in js/version.js); the page then shows "Reload to update".
 
-const VERSION = '1.5.0';
+const VERSION = '1.6.0';
 const CACHE = `smriti-shell-${VERSION}`;
 
 /* ASSETS:START */
@@ -19,10 +19,12 @@ const ASSETS = [
   './js/app.js',
   './js/backup.js',
   './js/calib.js',
+  './js/charts.js',
   './js/clock.js',
   './js/cloze.js',
   './js/confusion.js',
   './js/csat.js',
+  './js/dash.js',
   './js/data.js',
   './js/db.js',
   './js/derived.js',
@@ -38,6 +40,8 @@ const ASSETS = [
   './js/mains-flows.js',
   './js/mains-ui.js',
   './js/mains.js',
+  './js/maps.js',
+  './js/mission.js',
   './js/mockgen.js',
   './js/packs.js',
   './js/pdf.js',
@@ -63,8 +67,10 @@ const ASSETS = [
   './js/version.js',
   './js/view-booklet.js',
   './js/view-ca.js',
+  './js/view-commute.js',
   './js/view-csat.js',
   './js/view-data.js',
+  './js/view-health.js',
   './js/view-intake.js',
   './js/view-lab.js',
   './js/view-labs.js',
@@ -72,6 +78,8 @@ const ASSETS = [
   './js/view-leech.js',
   './js/view-library.js',
   './js/view-mains.js',
+  './js/view-map.js',
+  './js/view-mission.js',
   './js/view-mock.js',
   './js/view-more.js',
   './js/view-notes.js',
@@ -81,7 +89,9 @@ const ASSETS = [
   './js/view-review.js',
   './js/view-settings.js',
   './js/view-sources.js',
+  './js/view-timeline.js',
   './js/view-today.js',
+  './js/view-weekly.js',
   './js/weights.js',
   './js/worker.js',
   './vendor/minisearch/minisearch.js',
@@ -106,9 +116,12 @@ const ASSETS = [
   './vendor/pdfjs/wasm/openjpeg.wasm',
   './vendor/pdfjs/wasm/qcms_bg.wasm',
   './vendor/pdfjs/iccs/CGATS001Compat-v2-micro.icc',
+  './vendor/maps/india.json',
+  './vendor/maps/world.json',
   './profiles/capf-ac-2027.json',
   './profiles/cse-2028.json',
   './profiles/index.json',
+  './packs/demo/demo-places-dates.json',
   './packs/demo/demo-polity-syllabus.json',
   './packs/demo/demo-polity.json',
   './packs/demo/demo-source.pdf',

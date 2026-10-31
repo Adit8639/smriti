@@ -6,7 +6,8 @@ import { app, allNodes, activeProfile, appendEvents, emit } from './store.js';
 import { buildQueueNow, activeToday, minutesToday } from './study.js';
 import { examCountdown, phaseOn } from './profiles.js';
 import { buildTree } from './tree.js';
-import { quickAdd, causeSheet } from './sheets.js';
+import { quickAdd } from './sheets.js';
+import { missionSection, weeklyPrompt, tagPending, pendingCauses } from './view-mission.js';
 import { formatDate, localDate, plural, formatDateTime } from './util.js';
 import * as clock from './clock.js';
 
@@ -28,34 +29,6 @@ export function nextTopic() {
   return null;
 }
 
-async function tagPending(list) {
-  for (const p of list) {
-    if (p.pyqId) {
-      // A PYQ with no linked atom.
-      const q = await app.db.get('pyqs', p.pyqId);
-      if (!q) continue;
-      toast(`PYQ ${q.year}: ${String(q.stem).replace(/\s+/g, ' ').slice(0, 90)}…`, { ms: 5000 });
-      const ans = await causeSheet({ atom: null });
-      if (!ans) break;
-      await appendEvents([['review.cause', { reviewId: p.reviewId, atomId: null, pyqId: q.id, cause: ans.cause, other: ans.other || null, trap: ans.trap || null }]]);
-      continue;
-    }
-    const atom = await app.db.get('atoms', p.atomId);
-    if (!atom) continue;
-    const ans = await causeSheet({ atom });
-    if (!ans) break;
-    const ev = [['review.cause', { reviewId: p.reviewId, atomId: atom.id, cause: ans.cause, other: ans.other || null, trap: ans.trap || null }]];
-    if (ans.cause === 'confused' && ans.other) ev.push(['confusion.hit', { a: atom.id, b: ans.other, via: 'cause', reviewId: p.reviewId }]);
-    await appendEvents(ev);
-  }
-}
-
-// Misses still waiting for a cause: atoms from the queue, PYQs without atoms from state.
-function pendingCauses(q) {
-  const pyq = Object.entries(app.state.pyqStats).filter(([, x]) => x.pendingCause).map(([pyqId, x]) => ({ pyqId, reviewId: x.pendingCause }));
-  return [...q.pending, ...pyq];
-}
-
 export async function render() {
   const q = await buildQueueNow();
   const c = q.counts;
@@ -73,10 +46,18 @@ export async function render() {
       ph ? h('span', { class: 'badge ok', text: ph.name }) : null));
   }
 
+  // Today's mission
+  try {
+    const m = await missionSection(q);
+    if (m) root.append(m);
+  } catch (e) {
+    console.error(e);
+  }
+
   // Reviews
   const dueNow = c.forced + c.learning + c.due + c.contrasts;
   const act = activeToday();
-  root.append(h('section', { class: 'card hero' },
+  root.append(h('section', { class: 'card' },
     h('h2', { text: 'Reviews' }),
     h('div', { class: 'stat-row' },
       stat(dueNow, 'due now'), stat(c.new, 'new today'), stat(c.reviewsToday, 'done today')),
@@ -104,6 +85,8 @@ export async function render() {
   const qn = app.derived.summary ? app.derived.summary.quarantine : 0;
   if (qn) decks.push(h('a', { class: 'deck', href: '#/quarantine' }, h('strong', { text: 'Quarantine' }), h('span', { class: 'badge warn', text: String(qn) }), h('span', { class: 'small muted', text: 'AI-written or "verify" atoms waiting for approval' })));
   if (q.leeches.length) decks.push(h('a', { class: 'deck', href: '#/leeches' }, h('strong', { text: 'Rebuild leeches' }), h('span', { class: 'badge warn', text: String(q.leeches.length) }), h('span', { class: 'small muted', text: 'Suspended after repeated lapses' })));
+  const weekly = weeklyPrompt();
+  if (weekly) decks.push(weekly);
   const pending = pendingCauses(q);
   if (pending.length) {
     decks.push(h('button', { class: 'deck', type: 'button', onclick: async () => { await tagPending(pending); emit('rerender'); } },

@@ -4,7 +4,7 @@
 
 import { compareEvents, EVENT_TYPES } from './events.js';
 import { STATE_VERSION } from './version.js';
-import { contentHash, isObj } from './util.js';
+import { contentHash, isObj, localDate } from './util.js';
 import { review as fsrsReview, forget as fsrsForget } from './fsrs.js';
 
 const KNOWN = new Set(EVENT_TYPES);
@@ -51,7 +51,17 @@ export function initialState() {
     caAnchors: {},       // caId -> {nodeId: true} anchors added on a device
     caMonths: {},        // 'YYYY-MM' -> {done, ts}
     intake: {},          // batchId -> {kept, discarded, edited, revealed, lastTs}
+    days: {},            // local 'YYYY-MM-DD' -> {rev, stmt, active, loops, writes} (streak, mission)
+    missions: {},        // 'YYYY-MM-DD' -> {blocks, minutes, minimum, ts, skips {}, swaps {}, closed}
+    weekly: {},          // week (its Monday) -> {ts, notes}
+    repairs: [],         // last 20 Data health repairs {ts, actions}
   };
+}
+
+// Per-day activity, keyed by the device's local date (both devices share a time zone).
+function day(s, ts) {
+  const k = localDate(ts);
+  return s.days[k] || (s.days[k] = { rev: 0, stmt: 0, active: 0, loops: 0, writes: 0 });
 }
 
 const MAINS_KINDS = { 'mains.sprint': 'sprint', 'mains.answer': 'answer', 'mains.shadow': 'shadow', 'mains.case': 'case', 'mains.essay': 'essay', 'mains.precis': 'precis', 'mains.counter': 'counter' };
@@ -71,7 +81,7 @@ function onMains(s, e, p) {
   s.mains.counts[kind] = (s.mains.counts[kind] || 0) + 1;
   for (const n of nodes) s.mains.byNode[n] = (s.mains.byNode[n] || 0) + 1;
   s.mains.lastTs = e.ts;
-  if (str(p.sessionId)) sessionTouch(s, p, e.ts, p.ms, false, false);
+  day(s, e.ts).writes++;
 }
 
 export const OBJECTIVE_KEEP = 1000;
@@ -110,6 +120,7 @@ function sessionTouch(s, p, ts, ms, counted, correct) {
   const ss = s.sessions[p.sessionId];
   if (!ss) return;
   ss.active += clampMs(ms);
+  day(s, ts).active += clampMs(ms);
   if (ts > ss.end) ss.end = ts;
   if (counted) { ss.reviews++; if (correct) ss.correct++; }
 }
@@ -127,6 +138,11 @@ function onReview(s, e, p) {
   }
   if (CONFIDENCES.includes(p.confidence) && p.mode !== 'pretest') {
     pushObjective(s, { t: e.ts, c: p.confidence, ok: !!p.correct, src: pyqId ? 'pyq' : p.mode || 'review', f: p.format || null, a: str(p.atomId) ? p.atomId : null, q: pyqId });
+  }
+  if (p.mode !== 'pretest') {
+    const dd = day(s, e.ts);
+    if ((p.mode || 'review') === 'review' || p.mode === 'learn') dd.rev++;
+    if (pyqId || (p.mode === 'practice' && p.format === 'tf')) dd.stmt++;
   }
   if (!str(p.atomId)) {
     // A PYQ with no linked atom (pre-test): counts for calibration and the session only.
@@ -248,6 +264,7 @@ function onMockSubmitted(s, e, p) {
   m.skipped = m.n - right - wrong;
   m.score = Math.round((right * m.marks.right - wrong * m.marks.wrong) * 100) / 100;
   m.max = Math.round(m.n * m.marks.right * 100) / 100;
+  day(s, e.ts).stmt += right + wrong;
   m.needs = MOCK_NEEDS(m.key, answers);
   m.tags = {};
   m.unlocked = m.needs.length === 0;
@@ -402,6 +419,28 @@ export function applyInPlace(s, e) {
       s.mains.drill.n++;
       if (p.correct) s.mains.drill.right++;
       break;
+    case 'mission.planned':
+      // The first plan of a day wins; an explicit re-plan replaces it.
+      if (str(p.date) && Array.isArray(p.blocks) && (!s.missions[p.date] || p.replace === true)) {
+        s.missions[p.date] = { blocks: p.blocks.filter((b) => isObj(b) && str(b.id) && str(b.kind)), minutes: Number(p.minutes) || null, minimum: !!p.minimum, ts, skips: {}, swaps: {}, closed: false };
+      }
+      break;
+    case 'mission.skip':
+      if (str(p.date) && s.missions[p.date] && str(p.block)) s.missions[p.date].skips[p.block] = ['tired', 'no-time', 'not-useful'].includes(p.reason) ? p.reason : 'other';
+      break;
+    case 'mission.swap':
+      if (str(p.date) && s.missions[p.date] && str(p.block) && str(p.to)) s.missions[p.date].swaps[p.block] = p.to;
+      break;
+    case 'mission.closed':
+      if (str(p.date) && s.missions[p.date]) s.missions[p.date].closed = true;
+      break;
+    case 'weekly.done':
+      if (str(p.week)) s.weekly[p.week] = { ts, notes: str(p.notes) ? p.notes.slice(0, 2000) : '' };
+      break;
+    case 'data.repaired':
+      s.repairs.push({ ts, actions: Array.isArray(p.actions) ? p.actions.slice(0, 10) : [] });
+      if (s.repairs.length > 20) s.repairs.shift();
+      break;
     case 'ca.anchored':
       if (str(p.caId) && str(p.nodeId)) {
         const a = s.caAnchors[p.caId] || (s.caAnchors[p.caId] = {});
@@ -487,6 +526,7 @@ export function applyInPlace(s, e) {
         const pct = Number.isFinite(l.recallPct) ? l.recallPct : n.recallPct;
         n.completed++;
         n.lastLoopTs = ts;
+        day(s, ts).loops++;
         n.status = Number.isFinite(pct) && pct >= 70 ? 'learned' : 'learning';
         if (s.activeLoop[l.nodeId] === p.loopId) delete s.activeLoop[l.nodeId];
       }

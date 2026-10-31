@@ -18,6 +18,7 @@ import { pyqList, pyqsByIds, mockQuestions, projection, packKinds, nodeMaps } fr
 import { extractCandidates } from './intake.js';
 import { filled } from './cloze.js';
 import { inProfileScope } from './tree.js';
+import { priorities, dashData } from './dash.js';
 import { pyqProbe } from './pyq.js';
 import { rng } from './rng.js';
 
@@ -328,6 +329,61 @@ const handlers = {
     const pickT = r.sample(traps, Math.min(traps.length, Math.ceil(n * 0.65)));
     const pickR = r.sample(truths, Math.min(truths.length, n - pickT.length));
     return { items: r.shuffle([...pickT, ...pickR]), available: { traps: traps.length, truths: truths.length } };
+  },
+
+  async 'mission.priorities'(db, args) {
+    return priorities(db, await syncState(db), args);
+  },
+
+  async 'dash.data'(db, args) {
+    const t0 = performance.now();
+    const r = await dashData(db, await syncState(db), args);
+    r.ms = Math.round(performance.now() - t0);
+    return r;
+  },
+
+  // Data health: records and approximate size per store, plus the integrity scan.
+  async 'health.scan'(db) {
+    const st = await syncState(db);
+    const out = [];
+    for (const name of ['settings', 'profiles', 'nodes', 'packs', 'atoms', 'probes', 'pyqs', 'ca', 'answers', 'notes', 'sources', 'events', 'cache']) {
+      const all = await db.getAll(name);
+      let bytes = 0;
+      for (const r of all) {
+        for (const v of Object.values(r)) {
+          if (v instanceof Blob) bytes += v.size;
+          else if (Array.isArray(v) && v.some((x) => x instanceof Blob)) bytes += v.reduce((a, x) => a + (x instanceof Blob ? x.size : 0), 0);
+        }
+        bytes += JSON.stringify(r, (k, v) => (v instanceof Blob ? undefined : v)).length;
+      }
+      out.push({ store: name, records: all.length, bytes });
+    }
+    const derived = await refreshDerived(db, st);
+    const installed = new Set((await db.getAll('packs')).map((p) => p.id));
+    let stale = 0;
+    for (const s2 of CONTENT_STORES) for (const [, packId] of await db.keyPairs(s2, '_pack')) if (packId !== '@self' && !installed.has(packId)) stale++;
+    return { stores: out, integrity: derived.integrity, summary: derived.summary, stale, events: st.count, derived };
+  },
+
+  // One-tap repair: content left by packs that are no longer installed, a full state
+  // rebuild from the log, fresh caches and a fresh search index.
+  async 'health.repair'(db) {
+    const installed = new Set((await db.getAll('packs')).map((p) => p.id));
+    let removed = 0;
+    for (const s2 of CONTENT_STORES) {
+      const stale = (await db.keyPairs(s2, '_pack')).filter(([, packId]) => packId !== '@self' && !installed.has(packId)).map(([id]) => id);
+      if (stale.length) { await db.tx(s2, 'readwrite', (st2) => { for (const id of stale) st2[s2].delete(id); }); removed += stale.length; }
+    }
+    // Items left over from an older version of an installed pack (backups never delete).
+    const before = await refreshDerived(db, await syncState(db));
+    let older = 0;
+    for (const packId of Object.keys(before.integrity.stale || {})) older += await removeStaleItems(db, packId);
+    state = rebuild(await db.getAll('events'));
+    await db.put('cache', { key: 'state', value: state });
+    flushedCount = state.count;
+    index = null;
+    const derived = await refresh(db);
+    return { removed, older, events: state.count, derived };
   },
 
   // Offline intake: rule-based candidates from a source's page text, minus duplicates of

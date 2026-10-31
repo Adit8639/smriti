@@ -104,6 +104,18 @@ function showPlan(plan) {
   });
 }
 
+// One demo pack file from packs/demo (e.g. the places-and-dates pack for the Map and
+// Timeline Labs), through the same preview.
+export async function importDemoFile(file) {
+  try {
+    const r = await fetch(new URL(`packs/demo/${file}`, document.baseURI));
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    await previewPacks([{ name: file, text: await r.text() }]);
+  } catch (e) {
+    toast(`Demo pack unavailable: ${e.message}`, { kind: 'error' });
+  }
+}
+
 async function tryDemo() {
   try {
     const base = new URL('packs/demo/', document.baseURI);
@@ -265,7 +277,8 @@ export async function render() {
     h('p', { class: 'small muted', text: 'Packs are .json files made by the Forge prompts. Each is validated and shown as a dry run before anything is saved.' }),
     h('div', { class: 'button-row' },
       h('button', { class: 'btn primary', onclick: () => fileIn.click() }, 'Import packs…'),
-      h('button', { class: 'btn', onclick: tryDemo }, 'Try the demo pack')),
+      h('button', { class: 'btn', onclick: tryDemo }, 'Try the demo pack'),
+      h('button', { class: 'btn', onclick: () => importDemoFile('demo-places-dates.json') }, 'Demo places and dates')),
     fileIn));
   if (packs.length) root.append(h('div', { class: 'stack' }, packs.sort((a, b) => (a.title < b.title ? -1 : 1)).map(packCard)));
   else root.append(h('p', { class: 'muted small center', text: 'No packs installed.' }));

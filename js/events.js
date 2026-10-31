@@ -53,6 +53,12 @@ export const EVENT_TYPES = [
   'ca.anchored',       // {caId, nodeId, remove?} a static anchor added to (or taken off) a CA item
   'ca.monthDone',      // {month: 'YYYY-MM', done} reconciliation of a CA month
   'intake.triaged',    // {batchId, candId, action: keep|discard|edit, revealed, ms, atomId?, sourceId, page}
+  'mission.planned',   // {date, minutes, minimum, blocks: [{id, kind, minutes, target}]} the day's plan (first wins)
+  'mission.skip',      // {date, block, reason: tired|no-time|not-useful}
+  'mission.swap',      // {date, block, to} a block done another way
+  'mission.closed',    // {date} the close block: error triage and tomorrow's preview done
+  'weekly.done',       // {week: 'YYYY-MM-DD' (its Monday), notes, changes}
+  'data.repaired',     // {actions: [...], counts} one-tap repair from Data health
   'settings.set',      // {key, value} synced settings (active profile, budget, study limits)
   'profile.set',       // {profileId, path, value} profile override; value null removes it
   'backup.exported',   // {deviceName, fileName, events}

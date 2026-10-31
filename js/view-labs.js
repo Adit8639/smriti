@@ -43,6 +43,21 @@ export async function render() {
       href: '#/ca', primary: 'Months', links: [],
     }),
     labCard({
+      title: 'Commute mode',
+      text: 'One thumb: swipe reviews (tap to reveal, swipe to rate), 60-second true/false statement sprints, and Listen mode that reads cards aloud with the phone’s voices.',
+      href: '#/commute/swipe', primary: 'Swipe reviews', links: [['#/commute/sprint', '60-second sprint'], ['#/commute/listen', 'Listen']],
+    }),
+    labCard({
+      title: 'Map Lab',
+      text: 'Pins from your atoms on offline maps of India (official boundary) and the world: locate, identify and cluster drills, with current-affairs places on a news layer.',
+      href: '#/map', primary: 'India map', links: [['#/map/explore/world', 'World map']],
+    }),
+    labCard({
+      title: 'Timeline Lab',
+      text: 'Dated atoms as drills: order four events, find the missing middle event, date to event and event to date.',
+      href: '#/timeline', primary: 'Timelines', links: [],
+    }),
+    labCard({
       title: 'PDF intake',
       text: 'Fact-dense sentences from any PDF in Sources, found by rules with no AI: duplicates of your atoms dropped, a topic suggested, then a swipe deck to keep or discard each in about two seconds.',
       href: '#/intake', primary: 'Start an intake', links: [],
