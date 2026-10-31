@@ -4,7 +4,7 @@ An offline-first active-recall system for UPSC CSE (default profile: CSE 2028, o
 
 The engine holds no study content. Everything you study arrives as validated **content packs** (JSON files made with the Forge prompts in the build kit). Your packs, notes and progress stay in each device's browser storage. The hosted site holds only the code.
 
-Build status: **Phases 1–3** (Foundation, Recall Engine, Learn Loop/Reader/Notes). What each phase contains: [`docs/phase-1.md`](docs/phase-1.md), [`docs/phase-2.md`](docs/phase-2.md), [`docs/phase-3.md`](docs/phase-3.md). One test script for all three: [`docs/TESTING.md`](docs/TESTING.md).
+Build status: **Phases 1–6** (Foundation; Recall Engine; Learn Loop, Reader and Notes; Prelims Lab, Mocks and CSAT; Mains Studio, CA–Static Bridge and offline intake; Mission Planner, dashboard, Commute, Map and Timeline Labs). Phase 7 (optional laptop AI drafting) is not built. What each phase contains: [`docs/phase-1.md`](docs/phase-1.md) to [`docs/phase-6.md`](docs/phase-6.md). One test script for all six: [`docs/TESTING.md`](docs/TESTING.md).
 
 ## Run it
 
@@ -18,7 +18,7 @@ python3 -m http.server 8000
 
 Then open `http://localhost:8000/`. `localhost` counts as secure, so offline mode and install work there too. The data lives under that address, separate from the hosted copy.
 
-**Self-tests:** open `tests/` (Settings → About → *Run the self-tests*). The page runs the validator, merge, rebuild, ULID, profile and integrity tests, and end-to-end storage round trips on throwaway databases. Your real data is not touched.
+**Self-tests:** open `tests/` (More → Settings → About → *Run the self-tests*; 98 tests). The page runs the validator, merge, rebuild, ULID, profile, integrity, FSRS, queue, calibration, CSAT, mock-builder, Mains, intake and planner tests, and end-to-end storage round trips on throwaway databases. Your real data is not touched.
 
 ## Layout
 
@@ -28,9 +28,9 @@ Then open `http://localhost:8000/`. `localhost` counts as secure, so offline mod
 | `sw.js` | Service worker: versioned, cache-first shell. Bump `VERSION` (and `js/version.js`) on every release |
 | `manifest.webmanifest`, `icons/` | Install metadata |
 | `js/` | One ES module per concern (see below) |
-| `vendor/` | MiniSearch 7.2.0 (search, MIT), ts-fsrs 5.4.2 (FSRS scheduling, MIT), pdf.js 6.4.299 (PDF text and pages, Apache-2.0); see `vendor/README.md` |
+| `vendor/` | MiniSearch 7.2.0 (search, MIT), ts-fsrs 5.4.2 (FSRS scheduling, MIT), pdf.js 6.4.299 (PDF text and pages, Apache-2.0), ONNX Runtime Web 1.22.0 and all-MiniLM-L6-v2 (offline topic matching, MIT and Apache-2.0, loaded only on request), Natural Earth outline maps (public domain); see `vendor/README.md` |
 | `profiles/` | Exam profiles as data: dates, phases, papers, starter syllabus |
-| `packs/demo/` | Demo packs: 12 Polity topics; 30 atoms, 15 probes (every format), 5 PYQs, 3 CA items, 1 model answer, 1 note; and `demo-source.pdf`, the 40-page Demo Source the atoms cite |
+| `packs/demo/` | Demo packs: 12 Polity topics; 30 atoms, 15 probes (every format), 5 PYQs, 3 CA items, 1 model answer, 1 note; `demo-source.pdf`, the 40-page Demo Source the atoms cite; and `demo-places-dates.json`, 15 places with map pins and 10 dated history facts for the Map and Timeline Labs |
 | `tests/` | In-browser self-tests |
 | `docs/` | Phase notes and test scripts |
 
@@ -40,8 +40,11 @@ Then open `http://localhost:8000/`. `localhost` counts as secure, so offline mod
 - **Content:** `schema` (pack validator) · `packs` · `backup` · `integrity` · `profiles` · `tree` · `search`
 - **Recall engine:** `fsrs` (ts-fsrs wrapper) · `probes` (chooser, answer checking, rating rule) · `cloze` · `confusion` · `queue` · `study` · `session` (review player) · `probe-ui` (renderers) · `sheets` (cause, pickers, quick add) · `anki`
 - **Learning:** `pdf` · `sources` · `links` · `dictate`
+- **Prelims Lab:** `pyq` (statements in stems, truths from the key) · `calib` (marks, bands, EV, projection) · `csat` (generators) · `mockgen` (mock builder) · `weights` (recency-weighted PYQ counts) · `labdata` (worker side) · `rng` (seeded randomness)
+- **Mains and current affairs:** `mains` (directives, dimensions, rubric, diffs) · `mains-ui` · `mains-flows` · `intake` (rule-based candidates) · `embed` and `embed-worker` (offline sentence model)
+- **Planner and labs:** `mission` (priority, phases, missions, streak) · `dash` (dashboard data) · `charts` (SVG charts with table views) · `maps` (outline maps and pins)
 - **Shell:** `pwa` · `ui` · `app` (boot, routes)
-- **Screens:** `view-today`, `view-review`, `view-leech`, `view-library`, `view-learn`, `view-notes`, `view-booklet`, `view-sources`, `view-reader`, `view-quarantine`, `view-data`, `view-settings`
+- **Screens:** `view-today`, `view-mission`, `view-review`, `view-leech`, `view-library`, `view-learn`, `view-notes`, `view-booklet`, `view-labs`, `view-lab`, `view-mock`, `view-csat`, `view-mains`, `view-ca`, `view-intake`, `view-commute`, `view-map`, `view-timeline`, `view-progress`, `view-weekly`, `view-more`, `view-sources`, `view-reader`, `view-quarantine`, `view-data`, `view-health`, `view-settings`
 
 ## How data works
 
@@ -51,7 +54,9 @@ Then open `http://localhost:8000/`. `localhost` counts as secure, so offline mod
 - **Quarantine:** atoms with `origin: "model"` or `verify: true` wait until you approve them. An approval holds only for the exact content approved: if a pack update changes the atom, it returns to Quarantine.
 - **Reviews:** every answer is a `review.done` event. Its time, confidence, suggested and final rating and error cause go in follow-up `review.cause` events. FSRS card state is replayed from these, so both devices compute the same schedule.
 - **Your own atoms** (quick add, Reader, splits) are `atom.created` events. The worker materialises them into the atoms store as pack `@self`, and a backup carries them as events.
-- **Sources:** a PDF or its page text stays on the device that added it. Titles, page counts, topic mappings and pack links travel as events. The same file added on another device gets the same id (from its SHA-256) and links up.
+- **Sources:** a PDF or its page text stays on the device that added it. Titles, page counts, topic mappings and pack links travel as events. The same file added on another device gets the same id (from its SHA-256) and links up. Photos of handwritten Mains answers also stay on the device that took them; the attempt and its scores sync.
+- **Mocks, Mains attempts, missions, CA anchors, intake swipes** are all events too, so both devices compute the same calibration, dashboard and streak. A mock's answers count toward calibration only after its autopsy.
+- **Device clocks:** events replay in time order. If one device's clock runs ahead, the other device simply replays the log in order; nothing is lost or double-counted.
 
 ## Schema notes (SMRITI SCHEMA v1 as implemented)
 

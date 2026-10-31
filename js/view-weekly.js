@@ -62,7 +62,7 @@ export async function render() {
     h('section', { class: 'card' },
       h('h3', { text: '3 · Plan for next week' }),
       h('label', { class: 'field' }, h('span', { text: 'New atoms a day' }), newSel),
-      h('p', { class: 'small' }, 'Daily time budget per weekday: ', h('a', { href: '#/settings' }, 'Settings → Study')),
+      h('p', { class: 'small' }, 'Daily time budget per weekday: ', h('a', { href: '#/settings' }, 'Settings → Daily time budget')),
       notes),
     h('section', { class: 'card' },
       h('h3', { text: '4 · Backup' }),
