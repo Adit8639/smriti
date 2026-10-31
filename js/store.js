@@ -149,9 +149,15 @@ export function appendEvents(list) {
       sinceFlush += evs.length;
       if (sinceFlush >= 25) flushState();
     } else {
-      // Only after the test clock moved back: the events land mid-log, so the worker
-      // replays the whole log instead of the page.
-      setDerived(await call('refresh'));
+      // Only when the clock is behind the newest event (the test clock moved back, or a
+      // merged backup came from a device whose clock ran ahead): the events land mid-log,
+      // so the worker replays the whole log. The page then carries on as after an in-order
+      // append, without a redraw: redrawing would reopen screens that log an event as they
+      // open (the notes writer), which would log again, and again.
+      const d = await call('refresh');
+      if (d.state.count >= app.state.count) app.state = d.state;
+      app.derived = { integrity: d.integrity, nodeCounts: d.nodeCounts || {}, subtreeCounts: d.subtreeCounts || {}, summary: d.summary };
+      emit('state');
     }
     return evs;
   };

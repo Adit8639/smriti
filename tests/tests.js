@@ -547,6 +547,11 @@ test('FSRS', 'cards are deterministic and follow the learning steps', () => {
   eq(fsrsReview(null, T1, 4).state, State.Review, 'Easy graduates at once');
   const p = fsrsPreview(newCard(T1), T1);
   assert(p[1].due < p[3].due && p[3].due < p[4].due, 'Again < Good < Easy');
+  // A card last reviewed "in the future" (a synced device's clock ran ahead) must not throw.
+  const ahead = fsrsReview(fsrsReview(null, T1 + 5 * DAYMS, 4), T1 + 30 * DAYMS, 3);
+  const back = fsrsPreview(ahead, T1);
+  assert(back[1].due <= back[3].due, 'previews work when the clock is behind the last review');
+  eq(fsrsReview(ahead, T1, 1).lapses, 1, 'a review timed before the last one is treated as at the last one');
 });
 
 test('Rating', 'suggested rating follows the contract', () => {

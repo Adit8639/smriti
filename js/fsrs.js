@@ -53,13 +53,19 @@ const unpack = (k) => ({
 
 export const newCard = (ts) => pack(F.createEmptyCard(new Date(ts)));
 
+// ts-fsrs throws ("Invalid delta_t") for a time before the card's last review. That happens
+// when a synced device's clock ran ahead (or the test clock moved back), so such times are
+// treated as the moment of the last review. The event log replays in time order, so this
+// only ever changes previews shown on screen, never a stored schedule.
+const notBefore = (card, ts) => (card && card.last && ts < card.last ? card.last : ts);
+
 export function review(card, ts, rating, retention) {
-  return pack(scheduler(retention).next(unpack(card || newCard(ts)), new Date(ts), rating).card);
+  return pack(scheduler(retention).next(unpack(card || newCard(ts)), new Date(notBefore(card, ts)), rating).card);
 }
 
 // The four possible next cards, keyed by rating.
 export function preview(card, ts, retention) {
-  const r = scheduler(retention).repeat(unpack(card || newCard(ts)), new Date(ts));
+  const r = scheduler(retention).repeat(unpack(card || newCard(ts)), new Date(notBefore(card, ts)));
   return { 1: pack(r[1].card), 2: pack(r[2].card), 3: pack(r[3].card), 4: pack(r[4].card) };
 }
 
