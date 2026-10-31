@@ -723,6 +723,7 @@ ol.options li.chosen-wrong { color: var(--error); font-weight: 600; }
 .bridge-atoms li { padding: 0.35rem 0; border-bottom: 1px solid var(--border); }
 .chip.missing { border-style: dashed; color: var(--muted); }
 .chip-x { margin-left: 0.35rem; min-width: 28px; min-height: 28px; border: 0; background: transparent; color: var(--muted); font-size: 1.1rem; cursor: pointer; }
+@media (pointer: coarse) { .chip-x { min-width: 36px; min-height: 36px; margin-right: -0.4rem; } }
 .news-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; margin: 0.4rem 0; }
 .chip-news { background: var(--warn-soft); border-color: var(--warn); }
 .ca-month, .ca-row { display: grid; gap: 0.25rem; color: var(--fg); text-decoration: none; }
@@ -809,8 +810,12 @@ ol.mission { list-style: none; padding: 0; margin: 0.6rem 0; display: grid; gap:
 .heat-row { display: grid; grid-template-columns: minmax(6.5rem, 30%) 1fr; gap: 0.5rem; align-items: center; }
 .heat-label { overflow: hidden; text-overflow: ellipsis; }
 .heat-cells { display: flex; flex-wrap: wrap; gap: 3px; align-items: center; }
-.heat-cell { width: calc(16px * var(--w, 1)); height: calc(16px * var(--w, 1)); min-width: 14px; min-height: 14px; border-radius: 3px; border: 0; padding: 0; cursor: pointer; }
+.heat-cell { width: calc(20px * var(--w, 1)); height: calc(20px * var(--w, 1)); min-width: 18px; min-height: 18px; border-radius: 3px; border: 0; padding: 0; cursor: pointer; }
 .heat-cell:focus-visible { outline: 2px solid var(--fg); outline-offset: 1px; }
+/* Phones: the topic name above its squares, and squares big enough to tap (size still
+   follows PYQ weight, from a 24 px floor). */
+@media (max-width: 560px) { .heat-row { grid-template-columns: 1fr; gap: 0.2rem; } .heat-label { white-space: nowrap; } }
+@media (pointer: coarse) { .heat-cells { gap: 4px; } .heat-cell { width: calc(28px * var(--w, 1)); height: calc(28px * var(--w, 1)); min-width: 24px; min-height: 24px; } }
 .heat-none, .viz-swatch.heat-none { background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--border); }
 .heat-1 { background: var(--heat-1); } .heat-2 { background: var(--heat-2); } .heat-3 { background: var(--heat-3); } .heat-4 { background: var(--heat-4); } .heat-5 { background: var(--heat-5); }
 .commute { display: grid; gap: 0.6rem; }

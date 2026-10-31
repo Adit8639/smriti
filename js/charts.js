@@ -20,18 +20,19 @@ export function niceMax(v) {
   for (const m of [1, 2, 2.5, 5, 10]) if (m * p >= v) return m * p;
   return 10 * p;
 }
-// Which x labels to print: evenly spaced, and the last one only when it has room.
+// Which x labels to print: evenly spaced, always the latest one, and never a regular label
+// so close to the latest that the two collide on a phone.
 const labelAt = (i, n, max = 6) => {
+  if (i === n - 1) return true;
   const step = Math.ceil(n / max);
-  if (i % step === 0) return true;
-  return i === n - 1 && (n - 1) % step >= step / 2;
+  return i % step === 0 && n - 1 - i >= Math.max(1, step * 0.75);
 };
 
 function frame({ title, desc, table }) {
   const tip = h('div', { class: 'viz-tip', hidden: true, role: 'status' });
   const box = h('div', { class: 'viz' }, tip);
   const wrap = h('figure', { class: 'viz-figure' }, title ? h('figcaption', { class: 'viz-title', text: title }) : null, desc ? h('p', { class: 'small muted viz-desc', text: desc }) : null, box,
-    table ? h('details', { class: 'viz-table' }, h('summary', { text: 'Show as a table' }), table) : null);
+    table ? h('details', { class: 'viz-table' }, h('summary', { text: 'Show as a table' }), h('div', { class: 'table-wrap' }, table)) : null);
   const show = (x, y, text) => {
     tip.textContent = text;
     tip.hidden = false;
